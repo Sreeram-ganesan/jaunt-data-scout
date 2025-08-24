@@ -1,0 +1,27 @@
+budgets:
+  google.text:    { capacity: 5000, refill: 5000, period: 1h }
+  google.nearby:  { capacity: 5000, refill: 5000, period: 1h }
+  google.details: { capacity: 2000, refill: 2000, period: 1h }
+  overpass:       { capacity: 2000, refill: 2000, period: 1h }
+  otm:            { capacity: 2000, refill: 2000, period: 1h }
+  wiki:           { capacity: 2000, refill: 2000, period: 1h }
+  tavily.api:     { capacity: 3000, refill: 3000, period: 1h }
+  web.fetch:      { capacity: 10000, refill: 10000, period: 1h }
+  llm.tokens:     { capacity: 2000000, refill: 2000000, period: 1h }
+  nominatim:      { capacity: 1000, refill: 1000, period: 1h }
+
+split_ratio: 0.7  # 70/30 primaries/secondaries
+
+early_stop:
+  min_window_calls: 200
+  new_unique_rate_threshold: 0.05
+
+concurrency:
+  web_fetch_workers: 16
+  llm_extract_workers: 8
+
+kill_switches:
+  google: false
+  web: false
+  llm: false
+  open_data: false
