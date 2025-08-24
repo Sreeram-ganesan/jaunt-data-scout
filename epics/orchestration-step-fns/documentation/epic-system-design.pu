@@ -27,10 +27,10 @@ node "AWS Account" {
 }
 
 rectangle "External Providers" {
-  [Tavily API] as TavilyAPI
-  [Popular Travel Sites]\n[City/Gov Open Data APIs] as CityAPIs
-  [LLM Provider]\n(Bedrock/OpenAI/etc) as LLM
-  [Maps/Places APIs] as MapsAPIs
+  component "Tavily API" as TavilyAPI
+  component "Popular Travel Sites / City/Gov Open Data APIs" as CityAPIs
+  component "LLM Provider (Bedrock/OpenAI/etc)" as LLM
+  component "Maps/Places APIs" as MapsAPIs
 }
 
 Dev --> SFN : trigger city job\n(start execution)
