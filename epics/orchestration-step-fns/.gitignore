@@ -1,0 +1,15 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*.override.tf
+*.override.tf.json
+.terraform.lock.hcl
+
+# Go
+go/bin/
+go/build/
+go/.cache/
