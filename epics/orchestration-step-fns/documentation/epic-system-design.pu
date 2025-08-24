@@ -1,0 +1,70 @@
+@startuml
+!theme plain
+left to right direction
+
+actor Developer as Dev
+
+node "AWS Account" {
+  component "AWS Step Functions\nState Machine" as SFN
+  queue "SQS Frontier" as SQSFrontier
+  queue "SQS DLQ" as SQSDLQ
+  storage "S3 Raw Cache\n(manifests + payloads)" as S3
+  component "Lambda/Tasks\n(Connectors, ETL steps)" as Tasks
+  component "BudgetGuard\n(Go lib/Lambda)" as BudgetGuard
+  component "CloudWatch Logs" as CWLogs
+  component "CloudWatch Metrics" as CWMetrics
+  component "X-Ray/OTEL\nTracing" as Tracing
+  [IAM Role for SFN] as IAMRole
+}
+
+rectangle "External Providers" {
+  [Maps/Places APIs]
+  [Other Data Sources]
+}
+
+Dev --> SFN : trigger city job\n(start execution)
+
+SFN --> Tasks : run states\nDiscoverTargets ... Persist
+Tasks --> SQSFrontier : enqueue work items
+SQSFrontier --> Tasks : dequeue work
+Tasks --> S3 : put/get raw responses
+Tasks --> CWLogs : log
+Tasks --> CWMetrics : emit metrics
+Tasks --> Tracing : spans
+
+SFN --> BudgetGuard : evaluate\n$.budget.should_stop
+BudgetGuard --> SFN : { should_stop: bool }
+
+SFN --> CWLogs : execution logs
+SQSFrontier ..> SQSDLQ : redrive policy\n(maxReceiveCount)
+
+Tasks --> [Maps/Places APIs] : fetch data
+[Maps/Places APIs] --> Tasks : responses
+
+SFN -[hidden]--> SQSDLQ
+
+note right of SFN
+States (skeleton):
+- DiscoverTargets
+- SeedPrimaries
+- ExpandNeighbors
+- TileSweep
+- DedupeCanonicalize
+- Persist
+- BudgetGuard (Choice)
+- Finalize (Succeed)
+end note
+
+note bottom of S3
+Key layout:
+s3://<bucket>/<city>/<source>/<request_hash>.json
+Manifests: manifests/<city>/<run_id>.json
+end note
+
+note bottom of SQSFrontier
+Message schema:
+{lat,lng,radius,category,
+ correlation_id, city}
+end note
+
+@enduml
