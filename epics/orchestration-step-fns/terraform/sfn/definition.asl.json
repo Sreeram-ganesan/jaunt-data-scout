@@ -1,0 +1,68 @@
+{
+  "Comment": "MVP pipeline for city discovery (skeleton). Replace Pass with Task integrations.",
+  "StartAt": "DiscoverTargets",
+  "States": {
+    "DiscoverTargets": {
+      "Type": "Pass",
+      "Result": {"state": "DiscoverTargets", "status": "TODO"},
+      "Next": "SeedPrimaries",
+      "Retry": [
+        {"ErrorEquals": ["States.ALL"], "IntervalSeconds": 2, "BackoffRate": 2.0, "MaxAttempts": 3}
+      ]
+    },
+    "SeedPrimaries": {
+      "Type": "Pass",
+      "Result": {"state": "SeedPrimaries", "status": "TODO"},
+      "Next": "ExpandNeighbors",
+      "Retry": [
+        {"ErrorEquals": ["States.ALL"], "IntervalSeconds": 2, "BackoffRate": 2.0, "MaxAttempts": 3}
+      ]
+    },
+    "ExpandNeighbors": {
+      "Type": "Pass",
+      "Result": {"state": "ExpandNeighbors", "status": "TODO"},
+      "Next": "TileSweep",
+      "Retry": [
+        {"ErrorEquals": ["States.ALL"], "IntervalSeconds": 2, "BackoffRate": 2.0, "MaxAttempts": 3}
+      ]
+    },
+    "TileSweep": {
+      "Type": "Pass",
+      "Result": {"state": "TileSweep", "status": "TODO"},
+      "Next": "DedupeCanonicalize",
+      "Retry": [
+        {"ErrorEquals": ["States.ALL"], "IntervalSeconds": 2, "BackoffRate": 2.0, "MaxAttempts": 3}
+      ]
+    },
+    "DedupeCanonicalize": {
+      "Type": "Pass",
+      "Result": {"state": "DedupeCanonicalize", "status": "TODO"},
+      "Next": "Persist",
+      "Retry": [
+        {"ErrorEquals": ["States.ALL"], "IntervalSeconds": 2, "BackoffRate": 2.0, "MaxAttempts": 3}
+      ]
+    },
+    "Persist": {
+      "Type": "Pass",
+      "Result": {"state": "Persist", "status": "TODO"},
+      "Next": "BudgetGuard",
+      "Retry": [
+        {"ErrorEquals": ["States.ALL"], "IntervalSeconds": 2, "BackoffRate": 2.0, "MaxAttempts": 3}
+      ]
+    },
+    "BudgetGuard": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.budget.should_stop",
+          "BooleanEquals": true,
+          "Next": "Finalize"
+        }
+      ],
+      "Default": "DiscoverTargets"
+    },
+    "Finalize": {
+      "Type": "Succeed"
+    }
+  }
+}
