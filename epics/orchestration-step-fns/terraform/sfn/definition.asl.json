@@ -1,68 +1,205 @@
 {
-  "Comment": "MVP pipeline for city discovery (skeleton). Replace Pass with Task integrations.",
-  "StartAt": "DiscoverTargets",
+  "Comment": "Jaunt Data Scout v2 orchestrator for city discovery with maps and web paths",
+  "StartAt": "Initialize",
+  "TimeoutSeconds": 21600,
   "States": {
-    "DiscoverTargets": {
+    "Initialize": {
       "Type": "Pass",
-      "Result": {"state": "DiscoverTargets", "status": "TODO"},
-      "Next": "SeedPrimaries",
+      "ResultPath": "$.orchestrator",
+      "Result": {
+        "run_id": "$$.Execution.Id",
+        "start_time": "$$.State.EnteredTime"
+      },
+      "Next": "DiscoverWebSources"
+    },
+    "DiscoverWebSources": {
+      "Type": "Task",
+      "Resource": "${lambda_discover_web_sources_arn}",
+      "InputPath": "$",
+      "ResultPath": "$.web_sources",
       "Retry": [
         {"ErrorEquals": ["States.ALL"], "IntervalSeconds": 2, "BackoffRate": 2.0, "MaxAttempts": 3}
-      ]
+      ],
+      "Catch": [
+        {"ErrorEquals": ["States.ALL"], "ResultPath": "$.errors.DiscoverWebSources", "Next": "ToDLQOrContinue"}
+      ],
+      "Next": "DiscoverTargets"
+    },
+    "DiscoverTargets": {
+      "Type": "Task",
+      "Resource": "${lambda_discover_targets_arn}",
+      "ResultPath": "$.targets",
+      "Retry": [
+        {"ErrorEquals": ["States.ALL"], "IntervalSeconds": 2, "BackoffRate": 2.0, "MaxAttempts": 3}
+      ],
+      "Catch": [
+        {"ErrorEquals": ["States.ALL"], "ResultPath": "$.errors.DiscoverTargets", "Next": "ToDLQOrContinue"}
+      ],
+      "Next": "SeedPrimaries"
     },
     "SeedPrimaries": {
-      "Type": "Pass",
-      "Result": {"state": "SeedPrimaries", "status": "TODO"},
-      "Next": "ExpandNeighbors",
+      "Type": "Task",
+      "Resource": "${lambda_seed_primaries_arn}",
+      "ResultPath": "$.primaries",
       "Retry": [
         {"ErrorEquals": ["States.ALL"], "IntervalSeconds": 2, "BackoffRate": 2.0, "MaxAttempts": 3}
-      ]
+      ],
+      "Catch": [
+        {"ErrorEquals": ["States.ALL"], "ResultPath": "$.errors.SeedPrimaries", "Next": "ToDLQOrContinue"}
+      ],
+      "Next": "ExpandNeighbors"
     },
     "ExpandNeighbors": {
-      "Type": "Pass",
-      "Result": {"state": "ExpandNeighbors", "status": "TODO"},
-      "Next": "TileSweep",
+      "Type": "Task",
+      "Resource": "${lambda_expand_neighbors_arn}",
+      "ResultPath": "$.neighbors",
       "Retry": [
         {"ErrorEquals": ["States.ALL"], "IntervalSeconds": 2, "BackoffRate": 2.0, "MaxAttempts": 3}
-      ]
+      ],
+      "Catch": [
+        {"ErrorEquals": ["States.ALL"], "ResultPath": "$.errors.ExpandNeighbors", "Next": "ToDLQOrContinue"}
+      ],
+      "Next": "TileSweep"
     },
     "TileSweep": {
-      "Type": "Pass",
-      "Result": {"state": "TileSweep", "status": "TODO"},
-      "Next": "DedupeCanonicalize",
+      "Type": "Task",
+      "Resource": "${lambda_tile_sweep_arn}",
+      "ResultPath": "$.tile_sweep",
       "Retry": [
         {"ErrorEquals": ["States.ALL"], "IntervalSeconds": 2, "BackoffRate": 2.0, "MaxAttempts": 3}
-      ]
+      ],
+      "Catch": [
+        {"ErrorEquals": ["States.ALL"], "ResultPath": "$.errors.TileSweep", "Next": "ToDLQOrContinue"}
+      ],
+      "Next": "EarlyStopGate"
     },
-    "DedupeCanonicalize": {
-      "Type": "Pass",
-      "Result": {"state": "DedupeCanonicalize", "status": "TODO"},
-      "Next": "Persist",
-      "Retry": [
-        {"ErrorEquals": ["States.ALL"], "IntervalSeconds": 2, "BackoffRate": 2.0, "MaxAttempts": 3}
-      ]
-    },
-    "Persist": {
-      "Type": "Pass",
-      "Result": {"state": "Persist", "status": "TODO"},
-      "Next": "BudgetGuard",
-      "Retry": [
-        {"ErrorEquals": ["States.ALL"], "IntervalSeconds": 2, "BackoffRate": 2.0, "MaxAttempts": 3}
-      ]
-    },
-    "BudgetGuard": {
+    "EarlyStopGate": {
       "Type": "Choice",
       "Choices": [
         {
-          "Variable": "$.budget.should_stop",
-          "BooleanEquals": true,
+          "Variable": "$.metrics.new_unique_rate",
+          "NumericLessThan": 0.05,
+          "Next": "Finalize"
+        },
+        {
+          "Variable": "$.budget.wall_clock_remaining_seconds",
+          "NumericLessThanEquals": 0,
           "Next": "Finalize"
         }
       ],
-      "Default": "DiscoverTargets"
+      "Default": "BudgetGate"
+    },
+    "BudgetGate": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.budget.tokens_remaining.llm.tokens",
+          "NumericLessThan": 1,
+          "Next": "Finalize"
+        },
+        {
+          "Variable": "$.budget.tokens_remaining.tavily.api",
+          "NumericLessThan": 1,
+          "Next": "Finalize"
+        }
+      ],
+      "Default": "WebFetch"
+    },
+    "WebFetch": {
+      "Type": "Task",
+      "Resource": "${lambda_web_fetch_arn}",
+      "ResultPath": "$.web_fetch",
+      "Retry": [
+        {"ErrorEquals": ["States.ALL"], "IntervalSeconds": 1, "BackoffRate": 2.0, "MaxAttempts": 4}
+      ],
+      "Catch": [
+        {"ErrorEquals": ["States.ALL"], "ResultPath": "$.errors.WebFetch", "Next": "ToDLQOrContinue"}
+      ],
+      "Next": "ExtractWithLLM"
+    },
+    "ExtractWithLLM": {
+      "Type": "Task",
+      "Resource": "${lambda_extract_with_llm_arn}",
+      "ResultPath": "$.extracted",
+      "Retry": [
+        {"ErrorEquals": ["ThrottlingException","ServiceUnavailableException","States.TaskFailed"], "IntervalSeconds": 2, "BackoffRate": 2.0, "MaxAttempts": 3}
+      ],
+      "Catch": [
+        {"ErrorEquals": ["States.ALL"], "ResultPath": "$.errors.ExtractWithLLM", "Next": "ToDLQOrContinue"}
+      ],
+      "Next": "GeocodeValidate"
+    },
+    "GeocodeValidate": {
+      "Type": "Task",
+      "Resource": "${lambda_geocode_validate_arn}",
+      "ResultPath": "$.geocoded",
+      "Retry": [
+        {"ErrorEquals": ["States.ALL"], "IntervalSeconds": 1, "BackoffRate": 2.0, "MaxAttempts": 3}
+      ],
+      "Catch": [
+        {"ErrorEquals": ["States.ALL"], "ResultPath": "$.errors.GeocodeValidate", "Next": "ToDLQOrContinue"}
+      ],
+      "Next": "DedupeCanonicalize"
+    },
+    "DedupeCanonicalize": {
+      "Type": "Task",
+      "Resource": "${lambda_dedupe_canonicalize_arn}",
+      "ResultPath": "$.canonical",
+      "Retry": [
+        {"ErrorEquals": ["States.ALL"], "IntervalSeconds": 1, "BackoffRate": 2.0, "MaxAttempts": 3}
+      ],
+      "Catch": [
+        {"ErrorEquals": ["States.ALL"], "ResultPath": "$.errors.DedupeCanonicalize", "Next": "ToDLQOrContinue"}
+      ],
+      "Next": "Persist"
+    },
+    "Persist": {
+      "Type": "Task",
+      "Resource": "${lambda_persist_arn}",
+      "ResultPath": "$.persisted",
+      "Retry": [
+        {"ErrorEquals": ["States.ALL"], "IntervalSeconds": 1, "BackoffRate": 2.0, "MaxAttempts": 3}
+      ],
+      "Catch": [
+        {"ErrorEquals": ["States.ALL"], "ResultPath": "$.errors.Persist", "Next": "ToDLQOrContinue"}
+      ],
+      "Next": "Rank"
+    },
+    "Rank": {
+      "Type": "Task",
+      "Resource": "${lambda_rank_arn}",
+      "ResultPath": "$.ranked",
+      "Retry": [
+        {"ErrorEquals": ["States.ALL"], "IntervalSeconds": 1, "BackoffRate": 2.0, "MaxAttempts": 3}
+      ],
+      "Catch": [
+        {"ErrorEquals": ["States.ALL"], "ResultPath": "$.errors.Rank", "Next": "ToDLQOrContinue"}
+      ],
+      "Next": "Finalize"
+    },
+    "ToDLQOrContinue": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.orchestrator.fail_fast",
+          "BooleanEquals": true,
+          "Next": "SendToDLQ"
+        }
+      ],
+      "Default": "Finalize"
+    },
+    "SendToDLQ": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sqs:sendMessage",
+      "Parameters": {
+        "QueueUrl": "${frontier_dlq_url}",
+        "MessageBody.$": "$"
+      },
+      "End": true
     },
     "Finalize": {
-      "Type": "Succeed"
+      "Type": "Pass",
+      "End": true
     }
   }
 }

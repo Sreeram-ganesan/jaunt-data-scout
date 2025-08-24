@@ -28,19 +28,19 @@ Acceptance criteria
 - Frontier message schema supports union types for maps and web with optional trust_score and coordinates_confidence.
 
 Tasks
-- [ ] Define Step Functions state machine with all v2 states (including DiscoverWebSources, WebFetch, ExtractWithLLM, GeocodeValidate), retries/backoff, budget tokens, and early-stop gates.
-- [ ] Budget manager: token buckets per connector (google.text, google.nearby, google.details, overpass, otm, wiki, tavily.api, web.fetch, llm.tokens, nominatim) with 70/30 allocation controls.
-- [ ] Implement frontier SQS schemas (seed/expand/tile_sweep/open_data_pull + web) and DLQ; include budget_token, city context, and correlation_id.
+- [x] Define Step Functions state machine with all v2 states (including DiscoverWebSources, WebFetch, ExtractWithLLM, GeocodeValidate), retries/backoff, budget tokens, and early-stop gates.
+- [x] Budget manager: token buckets per connector (google.text, google.nearby, google.details, overpass, otm, wiki, tavily.api, web.fetch, llm.tokens, nominatim) with 70/30 allocation controls.
+- [x] Implement frontier SQS schemas (seed/expand/tile_sweep/open_data_pull + web) and DLQ; include budget_token, city context, and correlation_id.
       - maps message: {type:"maps", lat, lng, radius, category?, correlation_id, city}
       - web message: {type:"web", city, source_url, source_name, source_type, crawl_depth, correlation_id}
       - optional fields: trust_score, coordinates_confidence
-- [ ] S3 layout and lifecycle:
+- [x] S3 layout and lifecycle:
       - raw/html/<city>/<domain>/<content_hash>.html (retention 90d)
       - raw/json/<city>/<source>/<request_hash>.json (Google 30d; open-data 90d)
       - extracted/<city>/<run_id>/<content_hash>.json (90d)
       - manifests/<city>/<run_id>.json
-- [ ] Orchestrator config: YAML defaults for budgets, concurrency, early-stop; run-level overrides; kill switches and circuit breakers per connector; job resume/reentry semantics.
-- [ ] Emit metrics/alerts per state; add tracing context propagation across SQS and Step Functions; stitch traces across WebFetch and LLM extraction.
+- [x] Orchestrator config: YAML defaults for budgets, concurrency, early-stop; run-level overrides; kill switches and circuit breakers per connector; job resume/reentry semantics.
+- [x] Emit metrics/alerts per state; add tracing context propagation across SQS and Step Functions; stitch traces across WebFetch and LLM extraction.
 
 ## Epic: Connectors — Google Places (Text, Nearby, Details)
 Labels: MVP, data, backend, google, compliance
