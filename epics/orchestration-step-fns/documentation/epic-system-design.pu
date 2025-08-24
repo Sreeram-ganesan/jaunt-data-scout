@@ -1,0 +1,111 @@
+@startuml
+!theme plain
+left to right direction
+
+actor Developer as Dev
+
+node "AWS Account" {
+  component "AWS Step Functions\nState Machine" as SFN
+  queue "SQS Frontier" as SQSFrontier
+  queue "SQS DLQ" as SQSDLQ
+  storage "S3 Raw Cache\n(html/json + manifests + payloads)" as S3
+
+  component "Tavily Connector\n(Lambda)" as TavilyConn
+  component "Web Fetcher\n(Lambda + HTTP client)" as WebFetcher
+  component "Extractor (LLM)\n(Structured JSON)" as LLMExtractor
+  component "Geocode & Validate\n(Lambda)" as GeoValidate
+
+  component "Maps/Places Connectors\n(Lambda)" as MapsTasks
+  component "Dedupe/Canonicalize\n(Lambda)" as Dedupe
+  component "Persist\n(Lambda/ETL)" as Persist
+
+  component "BudgetGuard\n(Go lib/Lambda)" as BudgetGuard
+  component "CloudWatch Logs" as CWLogs
+  component "CloudWatch Metrics" as CWMetrics
+  component "X-Ray/OTEL\nTracing" as Tracing
+  [IAM Role for SFN] as IAMRole
+}
+
+rectangle "External Providers" {
+  [Tavily API] as TavilyAPI
+  [Popular Travel Sites]\n[City/Gov Open Data APIs] as CityAPIs
+  [LLM Provider]\n(Bedrock/OpenAI/etc) as LLM
+  [Maps/Places APIs] as MapsAPIs
+}
+
+Dev --> SFN : trigger city job\n(start execution)
+
+' Discovery paths
+SFN --> TavilyConn : DiscoverWebSources\n(city-scoped queries)
+TavilyConn --> TavilyAPI : search
+TavilyAPI --> TavilyConn : URL candidates
+TavilyConn --> SQSFrontier : enqueue {type:web, source_url,...}
+
+SFN --> MapsTasks : DiscoverTargets/SeedPrimaries
+MapsTasks --> MapsAPIs : fetch data
+MapsAPIs --> MapsTasks : responses
+MapsTasks --> SQSFrontier : enqueue {type:maps, ...}
+
+' Web crawling + extraction
+SQSFrontier --> WebFetcher : dequeue {type:web}
+WebFetcher --> CityAPIs : GET pages / APIs
+CityAPIs --> WebFetcher : HTML/JSON
+WebFetcher --> S3 : put raw HTML/JSON
+WebFetcher --> LLMExtractor : submit extraction job
+LLMExtractor --> LLM : extract structured POIs
+LLM --> LLMExtractor : entities {name, lat, lng, category?, source, source_url, confidences}
+LLMExtractor --> S3 : write extracted.json
+
+' Validation + canonicalization
+SFN --> GeoValidate : Geocode & Validate\n(missing/low-confidence coords)
+GeoValidate --> MapsAPIs : geocode
+MapsAPIs --> GeoValidate : coords
+GeoValidate --> Dedupe : normalized entities
+Dedupe --> Persist : upsert canonical POIs
+Persist --> S3 : manifests + parquet
+
+' Budgeting & observability
+SFN --> BudgetGuard : evaluate LLM tokens / Tavily / HTTP budgets
+BudgetGuard --> SFN : { should_stop: bool }
+
+' Ops
+WebFetcher --> CWLogs : log
+LLMExtractor --> CWLogs : log
+TavilyConn --> CWLogs : log
+Persist --> CWMetrics : metrics
+LLMExtractor --> Tracing : spans
+SQSFrontier ..> SQSDLQ : redrive policy\n(maxReceiveCount)
+
+' Notes
+note right of SFN
+States (skeleton):
+- DiscoverWebSources (Tavily)
+- WebFetch
+- ExtractWithLLM
+- GeocodeValidate
+- DiscoverTargets/SeedPrimaries (Maps)
+- ExpandNeighbors/TileSweep (Maps)
+- DedupeCanonicalize
+- Persist
+- BudgetGuard (Choice)
+- Finalize (Succeed)
+end note
+
+note bottom of S3
+Key layout (examples):
+- raw/html/<city>/<domain>/<content_hash>.html
+- raw/json/<city>/<source>/<request_hash>.json
+- extracted/<city>/<run_id>/<content_hash>.json
+- manifests/<city>/<run_id>.json
+end note
+
+note bottom of SQSFrontier
+Message schema (union):
+web:
+ {type:"web", city, source_url, source_name, source_type,
+  crawl_depth, correlation_id}
+maps:
+ {type:"maps", lat, lng, radius, category?, correlation_id, city}
+end note
+
+@enduml
