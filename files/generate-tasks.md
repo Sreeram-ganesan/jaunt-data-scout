@@ -328,3 +328,16 @@ Use these as child tasks under the relevant Epics, or as individual issues.
 - [ ] Edinburgh-specific open-data sources triage — Labels: MVP, data, LLM
 - [ ] Lineage and citations in additional_content — Labels: MVP, ETL, data
 - [ ] Contract tests for Google/OTM/OSM/Socrata/CKAN/ArcGIS/Wikidata adapters — Labels: MVP, QA, backend
+
+---
+
+### Orchestration — Additional tasks (Go Lambdas and AWS clients)
+
+- [ ] Replace mock-go Lambda with real Go handlers and AWS SDK clients
+  - [ ] Implement SQS FrontierQueue client (Go) for Enqueue/Dequeue/DeadLetter with correlation_id in MessageAttributes.
+  - [ ] Implement S3 RawCache client (Go) for Get/Put using the defined key layout and SSE.
+  - [ ] Create Go Lambda handler(s) for Step Functions states (start with one shared handler, then split per state).
+  - [ ] Wire Terraform lambda_*_arn variables to the deployed Go Lambdas; update ASL template to use these ARNs.
+  - [ ] CI: build/test Go handlers (GOOS=linux, GOARCH=arm64), run unit tests, and package artifacts for deployment.
+  - [ ] Observability: instrument handlers with EMF metrics (calls, errors, duration_ms, http_bytes_in, tokens_in/out) and X-Ray; include correlation_id in logs.
+  - [ ] Gradually replace lambdas/mock-go references with the new per-state Go handlers.
