@@ -66,7 +66,10 @@ jobs:
         find examples -name "*.json" -type f | while read example_file; do
           # Extract the schema path from example path
           # e.g., examples/frontier/web.example.json -> schemas/frontier.web.json
-          schema_path=$(echo "$example_file" | sed 's|examples/|schemas/|' | sed 's|/|.|g' | sed 's|\.example\.json|.json|')
+          # Remove examples/ prefix, replace / with ., remove .example suffix
+          relative_path=$(echo "$example_file" | sed 's|examples/||')
+          schema_name=$(echo "$relative_path" | sed 's|/|.|g' | sed 's|\.example\.json|.json|')
+          schema_path="schemas/$schema_name"
           
           if [ -f "$schema_path" ]; then
             echo "Validating $example_file against $schema_path"

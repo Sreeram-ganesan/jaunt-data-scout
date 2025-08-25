@@ -6,6 +6,8 @@ This directory contains JSON Schema definitions and examples for the Jaunt Data 
 
 The Jaunt Data Scout system processes place data through multiple stages, from initial discovery through final canonicalization. These schemas define the contracts between different components of the system to ensure data consistency and enable reliable processing.
 
+All schemas use **JSON Schema Draft-07** for broad compatibility and tooling support.
+
 ## Schemas
 
 ### Frontier Messages
