@@ -1,0 +1,363 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/Sreeram-ganesan/jaunt-data-scout/schemas/canonical.candidate.json",
+  "title": "Canonical Candidate Entity",
+  "description": "Schema for normalized place entities in the data scout pipeline",
+  "type": "object",
+  "required": ["name", "source", "confidences", "lineage", "external_refs", "additional_content", "coordinates_confidence"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Primary name of the place",
+      "minLength": 1
+    },
+    "lat": {
+      "type": "number",
+      "minimum": -90.0,
+      "maximum": 90.0,
+      "description": "Optional latitude coordinate"
+    },
+    "lng": {
+      "type": "number",
+      "minimum": -180.0,
+      "maximum": 180.0,
+      "description": "Optional longitude coordinate"
+    },
+    "category": {
+      "type": "string",
+      "description": "Optional primary category classification",
+      "examples": ["restaurant", "tourist_attraction", "museum", "park", "hotel"]
+    },
+    "source": {
+      "type": "string",
+      "description": "Source system identifier",
+      "enum": ["google", "osm", "otm", "wikidata", "web", "open_data", "tavily"]
+    },
+    "source_url": {
+      "type": "string",
+      
+      "description": "Optional URL where this entity was found"
+    },
+    "confidences": {
+      "type": "object",
+      "description": "Confidence scores for different aspects of the entity",
+      "required": ["overall"],
+      "properties": {
+        "overall": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Overall confidence score"
+        },
+        "name": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Confidence in the name accuracy"
+        },
+        "location": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Confidence in the location accuracy"
+        },
+        "category": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Confidence in the category classification"
+        }
+      },
+      "additionalProperties": false
+    },
+    "lineage": {
+      "type": "object",
+      "description": "Tracking information for data provenance",
+      "required": ["created_at", "pipeline_version"],
+      "properties": {
+        "created_at": {
+          "type": "string",
+          
+          "description": "When this entity was created"
+        },
+        "updated_at": {
+          "type": "string",
+          
+          "description": "When this entity was last updated"
+        },
+        "pipeline_version": {
+          "type": "string",
+          "description": "Version of the pipeline that created this entity"
+        },
+        "correlation_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "description": "UUID for tracking this entity through the pipeline"
+        },
+        "merge_history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "merged_at": {
+                "type": "string"
+              },
+              "merged_from_id": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": ["merged_at", "merged_from_id", "reason"]
+          },
+          "description": "History of entity merges for reversibility"
+        }
+      },
+      "additionalProperties": false
+    },
+    "external_refs": {
+      "type": "object",
+      "description": "External system identifiers and references",
+      "properties": {
+        "google_place_id": {
+          "type": "string",
+          "description": "Google Places API place ID"
+        },
+        "osm_id": {
+          "type": "string",
+          "description": "OpenStreetMap identifier"
+        },
+        "osm_type": {
+          "type": "string",
+          "enum": ["node", "way", "relation"],
+          "description": "OpenStreetMap object type"
+        },
+        "otm_id": {
+          "type": "string",
+          "description": "OpenTripMap identifier"
+        },
+        "wikidata_id": {
+          "type": "string",
+          "pattern": "^Q\\d+$",
+          "description": "Wikidata entity ID"
+        },
+        "wikipedia_url": {
+          "type": "string",
+          
+          "description": "Wikipedia page URL"
+        },
+        "hmdb_id": {
+          "type": "string",
+          "description": "Historical Marker Database ID"
+        },
+        "atlas_url": {
+          "type": "string",
+          
+          "description": "Atlas URL reference"
+        },
+        "city_portal_url": {
+          "type": "string",
+          
+          "description": "City portal URL reference"
+        }
+      },
+      "additionalProperties": false
+    },
+    "additional_content": {
+      "type": "object",
+      "description": "Source-specific additional data",
+      "properties": {
+        "google": {
+          "type": "object",
+          "properties": {
+            "types": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Google Places API types"
+            },
+            "opening_hours": {
+              "type": "object",
+              "properties": {
+                "open_now": {
+                  "type": "boolean"
+                },
+                "periods": {
+                  "type": "array"
+                },
+                "weekday_text": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "website": {
+              "type": "string"
+            },
+            "phone": {
+              "type": "string"
+            },
+            "photos": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "photo_reference": {
+                    "type": "string"
+                  },
+                  "html_attributions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": ["photo_reference", "html_attributions"]
+              }
+            }
+          }
+        },
+        "web": {
+          "type": "object",
+          "properties": {
+            "source_url": {
+              "type": "string"
+            },
+            "source_domain": {
+              "type": "string"
+            },
+            "extraction_confidences": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              }
+            },
+            "trust_score": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            }
+          }
+        },
+        "signals": {
+          "type": "object",
+          "properties": {
+            "has_wikipedia": {
+              "type": "boolean"
+            },
+            "niche_source": {
+              "type": "boolean"
+            },
+            "novelty": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "photo_count": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "score_breakdown": {
+          "type": "object",
+          "properties": {
+            "popularity": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "authority": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "geo_centrality": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "novelty": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "graph_context": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            }
+          }
+        },
+        "secondary_signals": {
+          "type": "object",
+          "properties": {
+            "adjacency_score": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "anchor_distances": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "anchor_id": {
+                    "type": "string"
+                  },
+                  "distance_meters": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "required": ["anchor_id", "distance_meters"]
+              }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "coordinates_confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Confidence score for coordinate accuracy"
+    },
+    "address": {
+      "type": "object",
+      "description": "Optional structured address information",
+      "properties": {
+        "formatted_address": {
+          "type": "string"
+        },
+        "street_number": {
+          "type": "string"
+        },
+        "street_name": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
+        "postal_code": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

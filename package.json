@@ -1,0 +1,25 @@
+{
+  "name": "jaunt-data-scout-contracts",
+  "version": "1.0.0",
+  "description": "Contract artifacts and schema validation for Jaunt Data Scout",
+  "scripts": {
+    "validate-schemas": "npm run validate:frontier-web && npm run validate:frontier-maps && npm run validate:canonical-candidate && npm run validate:extraction-web",
+    "validate:frontier-web": "ajv validate -s schemas/frontier.web.json -d examples/frontier/web.example.json",
+    "validate:frontier-maps": "ajv validate -s schemas/frontier.maps.json -d examples/frontier/maps.example.json",
+    "validate:canonical-candidate": "ajv validate -s schemas/canonical.candidate.json -d examples/canonical/candidate.example.json",
+    "validate:extraction-web": "ajv validate -s schemas/extraction.web.json -d examples/extraction/web.example.json",
+    "compile-schemas": "for schema in schemas/*.json; do echo \"Compiling $schema:\"; ajv compile -s \"$schema\" --spec=draft7; done",
+    "validate-all": "npm run compile-schemas && npm run validate-schemas"
+  },
+  "devDependencies": {
+    "ajv-cli": "^5.0.0"
+  },
+  "keywords": [
+    "json-schema",
+    "data-contracts",
+    "validation",
+    "jaunt-data-scout"
+  ],
+  "author": "Jaunt Data Scout Team",
+  "license": "MIT"
+}

@@ -1,0 +1,90 @@
+{
+  "extraction_metadata": {
+    "extraction_id": "a1b2c3d4-5e6f-7890-abcd-ef1234567890",
+    "correlation_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "source_url": "https://www.visitscotland.com/info/towns/edinburgh",
+    "source_domain": "visitscotland.com",
+    "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "extracted_at": "2024-08-25T14:30:00Z",
+    "extractor_version": "1.0.0",
+    "model_info": {
+      "provider": "openai",
+      "model": "gpt-4o",
+      "tokens_used": 1250,
+      "cost_estimate": 0.025
+    },
+    "confidences": {
+      "overall": 0.87,
+      "entity_detection": 0.92,
+      "location_extraction": 0.83,
+      "categorization": 0.89
+    },
+    "trust_score": 0.91
+  },
+  "entities": [
+    {
+      "name": "Edinburgh Castle",
+      "lat": 55.9486,
+      "lng": -3.1999,
+      "category": "tourist_attraction",
+      "source": "web",
+      "source_url": "https://www.visitscotland.com/info/towns/edinburgh",
+      "description": "Historic fortress which dominates the skyline of Edinburgh from its position on the Castle Rock",
+      "address": {
+        "formatted_address": "Castlehill, Edinburgh EH1 2NG, UK",
+        "street": "Castlehill",
+        "city": "Edinburgh",
+        "state": "Scotland",
+        "country": "UK",
+        "postal_code": "EH1 2NG"
+      },
+      "contact": {
+        "website": "https://www.edinburghcastle.scot"
+      },
+      "confidences": {
+        "overall": 0.95,
+        "name": 0.98,
+        "location": 0.94,
+        "category": 0.96,
+        "address": 0.91
+      },
+      "trust_score": 0.93,
+      "coordinates_confidence": 0.96,
+      "extraction_context": {
+        "text_snippet": "Edinburgh Castle, perched on an extinct volcano, is the iconic symbol of Scotland's capital city",
+        "section": "main-attractions",
+        "html_selector": ".attraction-card[data-id='edinburgh-castle']"
+      }
+    },
+    {
+      "name": "Royal Mile",
+      "lat": 55.9505,
+      "lng": -3.1864,
+      "category": "tourist_attraction",
+      "source": "web",
+      "source_url": "https://www.visitscotland.com/info/towns/edinburgh",
+      "description": "Historic street running through the Old Town of Edinburgh",
+      "address": {
+        "formatted_address": "Royal Mile, Edinburgh, UK",
+        "street": "Royal Mile",
+        "city": "Edinburgh",
+        "state": "Scotland",
+        "country": "UK"
+      },
+      "confidences": {
+        "overall": 0.89,
+        "name": 0.92,
+        "location": 0.85,
+        "category": 0.88,
+        "address": 0.87
+      },
+      "trust_score": 0.90,
+      "coordinates_confidence": 0.85,
+      "extraction_context": {
+        "text_snippet": "The Royal Mile stretches from Edinburgh Castle to the Palace of Holyroodhouse",
+        "section": "historic-streets",
+        "html_selector": ".attraction-card[data-id='royal-mile']"
+      }
+    }
+  ]
+}

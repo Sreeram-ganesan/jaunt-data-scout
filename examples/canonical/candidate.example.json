@@ -1,0 +1,118 @@
+{
+  "name": "The Scotch Whisky Experience",
+  "lat": 55.9486,
+  "lng": -3.1999,
+  "category": "tourist_attraction",
+  "source": "google",
+  "source_url": "https://www.scotchwhiskyexperience.co.uk",
+  "confidences": {
+    "overall": 0.92,
+    "name": 0.95,
+    "location": 0.89,
+    "category": 0.90
+  },
+  "lineage": {
+    "created_at": "2024-08-25T14:15:00Z",
+    "updated_at": "2024-08-25T14:15:00Z",
+    "pipeline_version": "1.2.3",
+    "correlation_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "merge_history": [
+      {
+        "merged_at": "2024-08-25T14:20:00Z",
+        "merged_from_id": "candidate-abc123",
+        "reason": "duplicate_detection_high_similarity"
+      }
+    ]
+  },
+  "external_refs": {
+    "google_place_id": "ChIJ8dgGfJHVh0gRcgBWNWqpKzU",
+    "osm_id": "way/4084858",
+    "osm_type": "way",
+    "otm_id": "5872504",
+    "wikidata_id": "Q7436421",
+    "wikipedia_url": "https://en.wikipedia.org/wiki/Scotch_Whisky_Experience"
+  },
+  "additional_content": {
+    "google": {
+      "types": ["tourist_attraction", "museum", "point_of_interest", "establishment"],
+      "opening_hours": {
+        "open_now": true,
+        "periods": [
+          {
+            "open": {
+              "day": 1,
+              "time": "1000"
+            },
+            "close": {
+              "day": 1,
+              "time": "1800"
+            }
+          }
+        ],
+        "weekday_text": [
+          "Monday: 10:00 AM – 6:00 PM",
+          "Tuesday: 10:00 AM – 6:00 PM",
+          "Wednesday: 10:00 AM – 6:00 PM",
+          "Thursday: 10:00 AM – 6:00 PM",
+          "Friday: 10:00 AM – 6:00 PM",
+          "Saturday: 10:00 AM – 6:00 PM",
+          "Sunday: 10:00 AM – 6:00 PM"
+        ]
+      },
+      "website": "https://www.scotchwhiskyexperience.co.uk",
+      "phone": "+44 131 220 0441",
+      "photos": [
+        {
+          "photo_reference": "AeJY03DfXxYzxDkNOGUX8Cz5FsxOCnxKbCz3eRzRi",
+          "html_attributions": ["<a href=\"https://maps.google.com/maps/contrib/123456789\">John Smith</a>"]
+        }
+      ]
+    },
+    "web": {
+      "source_url": "https://www.scotchwhiskyexperience.co.uk",
+      "source_domain": "scotchwhiskyexperience.co.uk",
+      "extraction_confidences": {
+        "name": 0.95,
+        "location": 0.88,
+        "description": 0.92
+      },
+      "trust_score": 0.89
+    },
+    "signals": {
+      "has_wikipedia": true,
+      "niche_source": false,
+      "novelty": 0.3,
+      "photo_count": 15
+    },
+    "score_breakdown": {
+      "popularity": 0.85,
+      "authority": 0.78,
+      "geo_centrality": 0.92,
+      "novelty": 0.3,
+      "graph_context": 0.67
+    },
+    "secondary_signals": {
+      "adjacency_score": 0.78,
+      "anchor_distances": [
+        {
+          "anchor_id": "edinburgh-castle",
+          "distance_meters": 150.0
+        },
+        {
+          "anchor_id": "royal-mile",
+          "distance_meters": 200.0
+        }
+      ]
+    }
+  },
+  "coordinates_confidence": 0.94,
+  "address": {
+    "formatted_address": "354 Castlehill, Edinburgh EH1 2NE, UK",
+    "street_number": "354",
+    "street_name": "Castlehill",
+    "city": "Edinburgh",
+    "state": "Scotland",
+    "country": "UK",
+    "postal_code": "EH1 2NE"
+  }
+}
