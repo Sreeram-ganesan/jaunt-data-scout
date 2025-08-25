@@ -36,20 +36,29 @@ data "aws_iam_policy_document" "sfn_policy" {
   statement {
     sid     = "AllowSQS"
     effect  = "Allow"
-    actions = ["sqs:SendMessage", "sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"]
+    actions = [
+      "sqs:SendMessage",
+      "sqs:ReceiveMessage",
+      "sqs:DeleteMessage",
+      "sqs:GetQueueAttributes",
+      "sqs:GetQueueUrl"
+    ]
     resources = [
-      aws_sqs_queue.frontier.arn,
-      aws_sqs_queue.dlq.arn
+      aws_sqs_queue.frontier_dlq.arn
     ]
   }
 
   statement {
     sid     = "AllowS3RawCache"
     effect  = "Allow"
-    actions = ["s3:PutObject", "s3:GetObject", "s3:ListBucket"]
+    actions = [
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:ListBucket"
+    ]
     resources = [
-      aws_s3_bucket.raw_cache.arn,
-      "${aws_s3_bucket.raw_cache.arn}/*"
+      aws_s3_bucket.raw.arn,
+      "${aws_s3_bucket.raw.arn}/*"
     ]
   }
 }
