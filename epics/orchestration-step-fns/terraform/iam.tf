@@ -59,6 +59,17 @@ data "aws_iam_policy_document" "sfn_policy" {
     resources = ["*"]
   }
 
+  # TODO: Refine permissions for least privilege - currently allowing all X-Ray actions
+  statement {
+    sid    = "AllowXRay"
+    effect = "Allow"
+    actions = [
+      "xray:PutTraceSegments",
+      "xray:PutTelemetryRecords"
+    ]
+    resources = ["*"]
+  }
+
   statement {
     sid     = "AllowSQS"
     effect  = "Allow"
