@@ -1,0 +1,27 @@
+# Optionally manage the mock Lambda with Terraform (artifact must exist locally)
+variable "mock_lambda_zip" {
+  description = "Path to the built mock lambda zip (function.zip)"
+  type        = string
+  default     = "../../lambdas/mock-go/function.zip"
+}
+
+resource "aws_iam_role" "jaunt_mock_role" {
+  name               = "${var.project_prefix}-${var.environment}-mock-lambda-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Effect    = "Allow",
+      Principal = { Service = "lambda.amazonaws.com" },
+      Action    = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "jaunt_mock_logs" {
+  role       = aws_iam_role.jaunt_mock_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+output "jaunt_mock_lambda_arn" {
+  value = aws_lambda_function.jaunt_mock.arn
+}

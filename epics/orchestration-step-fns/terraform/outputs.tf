@@ -11,5 +11,5 @@ output "sqs_dlq_queue_url" {
 }
 
 output "state_machine_arn" {
-  value = aws_sfn_state_machine.orchestration.arn
+  value = module.sfn.state_machine_arn
 }

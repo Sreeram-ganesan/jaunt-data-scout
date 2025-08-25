@@ -1,7 +1,13 @@
 variable "s3_bucket_name" { type = string }
 
+data "aws_caller_identity" "current" {}
+
+locals {
+  raw_bucket_name = lower("jaunt-${var.environment}-data-scout-raw-${data.aws_caller_identity.current.account_id}")
+}
+
 resource "aws_s3_bucket" "raw" {
-  bucket = var.s3_bucket_name
+  bucket = local.raw_bucket_name
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "raw" {

@@ -1,3 +1,10 @@
+locals {
+  common_tags = {
+    Project     = "data-scout"
+    Environment = var.environment
+  }
+}
+
 data "aws_iam_policy_document" "sfn_assume" {
   statement {
     effect  = "Allow"
@@ -13,7 +20,12 @@ data "aws_iam_policy_document" "sfn_assume" {
 resource "aws_iam_role" "sfn_role" {
   name               = "${local.step_function_name}-role"
   assume_role_policy = data.aws_iam_policy_document.sfn_assume.json
-  tags               = local.tags
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "data-scout-orchestration-step-function-role"
+    }
+  )
 }
 
 data "aws_iam_policy_document" "sfn_policy" {
