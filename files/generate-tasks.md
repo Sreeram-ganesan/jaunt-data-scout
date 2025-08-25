@@ -30,9 +30,9 @@ Tasks
   - [x] Frontier message schemas (maps/web union) incl. optional trust_score, coordinates_confidence, correlation_id; examples in repo.
   - [x] Canonical candidate schema (normalized entity) with lineage and confidences.
   - [x] Web extraction output schema; strict validation and contract tests.
-- [ ] Config & budgets
-  - [ ] YAML defaults for budgets, concurrency, early-stop; environment overrides.
-  - [ ] Budget token taxonomy finalized (google.text, google.nearby, google.details, overpass, otm, wiki, tavily.api, web.fetch, llm.tokens, nominatim).
+- [x] Config & budgets
+  - [x] YAML defaults for budgets, concurrency, early-stop; environment overrides.
+  - [x] Budget token taxonomy finalized (google.text, google.nearby, google.details, overpass, otm, wiki, tavily.api, web.fetch, llm.tokens, nominatim).
 - [ ] Secrets/IAM/egress
   - [ ] Secrets Manager wiring (Google, Tavily, OTM, DB, LLM); rotation policy documented.
   - [ ] IAM least-privilege roles and S3 policies; SSE-S3/KMS and access logs enabled.
