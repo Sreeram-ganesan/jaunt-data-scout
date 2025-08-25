@@ -1,8 +1,5 @@
-variable "project" { type = string }
-variable "environment" { type = string }
-
 locals {
-  name_prefix = "${var.project}-${var.environment}"
+  name_prefix = "${var.project_prefix}-${var.environment}"
 }
 
 resource "aws_sqs_queue" "frontier_dlq" {
@@ -21,7 +18,7 @@ resource "aws_sqs_queue" "frontier" {
     maxReceiveCount     = 5
   })
   tags = {
-    Project     = var.project
+    Project     = var.project_prefix
     Environment = var.environment
   }
 }

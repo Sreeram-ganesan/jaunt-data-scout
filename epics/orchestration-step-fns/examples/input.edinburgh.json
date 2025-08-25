@@ -1,0 +1,15 @@
+{
+    "job_id": "city-discovery-edinburgh-001",
+    "city": "Edinburgh",
+    "seed": { "type": "map", "center": { "lat": 55.9533, "lng": -3.1883 }, "radius_km": 10 },
+    "budgets": {
+      "google": { "tokens_per_min": 300, "max_tokens_total": 20000 },
+      "web": { "bytes_per_min": 1000000, "max_bytes_total": 200000000 },
+      "llm": { "tokens_per_min": 100, "max_tokens_total": 10000 },
+      "open_data": { "calls_per_min": 100, "max_calls_total": 10000 }
+    },
+    "kill_switches": { "google": false, "web": true, "llm": true, "open_data": false },
+    "early_stop": { "min_new_unique_rate": 0.05, "window_calls": 200 },
+    "timeouts": { "wall_clock_seconds": 3600 },
+    "s3_prefix": "cities/edinburgh/test-run/"
+  }

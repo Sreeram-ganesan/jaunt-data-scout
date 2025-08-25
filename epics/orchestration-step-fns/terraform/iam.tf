@@ -1,3 +1,10 @@
+locals {
+  common_tags = {
+    Project     = "data-scout"
+    Environment = var.environment
+  }
+}
+
 data "aws_iam_policy_document" "sfn_assume" {
   statement {
     effect  = "Allow"
@@ -13,7 +20,12 @@ data "aws_iam_policy_document" "sfn_assume" {
 resource "aws_iam_role" "sfn_role" {
   name               = "${local.step_function_name}-role"
   assume_role_policy = data.aws_iam_policy_document.sfn_assume.json
-  tags               = local.tags
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "data-scout-orchestration-step-function-role"
+    }
+  )
 }
 
 data "aws_iam_policy_document" "sfn_policy" {
@@ -36,20 +48,29 @@ data "aws_iam_policy_document" "sfn_policy" {
   statement {
     sid     = "AllowSQS"
     effect  = "Allow"
-    actions = ["sqs:SendMessage", "sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"]
+    actions = [
+      "sqs:SendMessage",
+      "sqs:ReceiveMessage",
+      "sqs:DeleteMessage",
+      "sqs:GetQueueAttributes",
+      "sqs:GetQueueUrl"
+    ]
     resources = [
-      aws_sqs_queue.frontier.arn,
-      aws_sqs_queue.dlq.arn
+      aws_sqs_queue.frontier_dlq.arn
     ]
   }
 
   statement {
     sid     = "AllowS3RawCache"
     effect  = "Allow"
-    actions = ["s3:PutObject", "s3:GetObject", "s3:ListBucket"]
+    actions = [
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:ListBucket"
+    ]
     resources = [
-      aws_s3_bucket.raw_cache.arn,
-      "${aws_s3_bucket.raw_cache.arn}/*"
+      aws_s3_bucket.raw.arn,
+      "${aws_s3_bucket.raw.arn}/*"
     ]
   }
 }
