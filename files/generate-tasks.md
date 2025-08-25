@@ -12,12 +12,52 @@ How to use
 
 ---
 
+## Epic: Foundations & Enablers — Contracts, Budgets, Secrets, Observability (v2)
+Labels: MVP, infra, backend, observability, compliance
+
+Goals
+- Establish the shared foundations so individual states can be swapped from mock → real without churn: schemas/contracts, budgets/config, secrets/IAM/egress, observability/alerts, and DLQ/runbooks.
+
+Acceptance criteria
+- JSON Schemas published for: frontier messages (maps/web union), canonical candidate, and web extraction outputs; CI contract tests validate producers/consumers.
+- Config defaults (YAML) present for budgets/concurrency/early-stop with run-level overrides; feature flags can flip per-state mock/real in Step Functions.
+- Secrets in AWS Secrets Manager and IAM least-privilege roles for each Lambda; VPC egress allowlists configured for WebFetch/LLM.
+- Step Functions logging + tracing enabled; Lambdas emit EMF metrics and propagate correlation_id; CloudWatch dashboards/alarms in place.
+- DLQ re-drive runbook and script exist; DLQ payload schema compatible with reprocessing path.
+
+Tasks
+- [ ] Contracts (JSON Schema + docs + CI validation)
+  - [ ] Frontier message schemas (maps/web union) incl. optional trust_score, coordinates_confidence, correlation_id; examples in repo.
+  - [ ] Canonical candidate schema (normalized entity) with lineage and confidences.
+  - [ ] Web extraction output schema; strict validation and contract tests.
+- [ ] Config & budgets
+  - [ ] YAML defaults for budgets, concurrency, early-stop; environment overrides.
+  - [ ] Budget token taxonomy finalized (google.text, google.nearby, google.details, overpass, otm, wiki, tavily.api, web.fetch, llm.tokens, nominatim).
+- [ ] Secrets/IAM/egress
+  - [ ] Secrets Manager wiring (Google, Tavily, OTM, DB, LLM); rotation policy documented.
+  - [ ] IAM least-privilege roles and S3 policies; SSE-S3/KMS and access logs enabled.
+  - [ ] VPC egress allowlists and DNS for WebFetch/LLM; robots/ToS headers enforced at fetcher.
+- [ ] Observability baseline
+  - [ ] Enable Step Functions loggingConfiguration (ALL) and tracingConfiguration (X-Ray).
+  - [ ] EMF metrics per Lambda: calls, errors, retries, duration_ms, http_bytes_in, tokens_in, tokens_out, token_cost_estimate, new_unique_rate.
+  - [ ] Correlation_id propagation across SQS → Lambdas; include in logs and spans.
+  - [ ] Dashboards + alarms: ExecutionFailed, state timeouts, DLQ depth, budget cap nearing (LLM/Tavily/HTTP), error spikes.
+- [ ] DLQ & runbooks
+  - [ ] Re-drive Lambda/CLI script to re-enqueue DLQ messages; safeguards to avoid duplicates.
+  - [ ] Incident runbook for city jobs (triage, re-drive, rollback toggles).
+- [ ] Feature flags
+  - [ ] Per-state mock↔real flags via Terraform/template variables and Lambda env.
+- [ ] Golden tests
+  - [ ] Golden input presets and a web "smoke pack" (hand-curated URLs + expected entities) runnable in CI.
+
+---
+
 ## Epic: Orchestration — Step Functions workflow for city discovery (v2)
 Labels: MVP, infra, backend
 
 Goals
 - Implement AWS Step Functions orchestration for the MVP pipeline, including both maps and web paths:
-  DiscoverWebSources → DiscoverTargets → SeedPrimaries → ExpandNeighbors → TileSweep → WebFetch → ExtractWithLLM → GeocodeValidate → DedupeCanonicalize → Persist → Rank → Finalize.
+  DiscoverWebSources → DiscoverTargets → SeedPrimaries → ExpandNeighbors → TileSweep → WebFetch → ExtractWithLLM → GeocodeValidate → DedupeCanonicalize → Persist → Rank → Finalize
 - Integrate SQS frontier + DLQ, S3 raw cache, budgets, early-stop, and metrics/traces.
 
 Acceptance criteria
@@ -31,16 +71,14 @@ Tasks
 - [x] Define Step Functions state machine with all v2 states (including DiscoverWebSources, WebFetch, ExtractWithLLM, GeocodeValidate), retries/backoff, budget tokens, and early-stop gates.
 - [x] Budget manager: token buckets per connector (google.text, google.nearby, google.details, overpass, otm, wiki, tavily.api, web.fetch, llm.tokens, nominatim) with 70/30 allocation controls.
 - [x] Implement frontier SQS schemas (seed/expand/tile_sweep/open_data_pull + web) and DLQ; include budget_token, city context, and correlation_id.
-      - maps message: {type:"maps", lat, lng, radius, category?, correlation_id, city}
-      - web message: {type:"web", city, source_url, source_name, source_type, crawl_depth, correlation_id}
-      - optional fields: trust_score, coordinates_confidence
-- [x] S3 layout and lifecycle:
-      - raw/html/<city>/<domain>/<content_hash>.html (retention 90d)
-      - raw/json/<city>/<source>/<request_hash>.json (Google 30d; open-data 90d)
-      - extracted/<city>/<run_id>/<content_hash>.json (90d)
-      - manifests/<city>/<run_id>.json
-- [x] Orchestrator config: YAML defaults for budgets, concurrency, early-stop; run-level overrides; kill switches and circuit breakers per connector; job resume/reentry semantics.
-- [x] Emit metrics/alerts per state; add tracing context propagation across SQS and Step Functions; stitch traces across WebFetch and LLM extraction.
+- [x] S3 layout and lifecycle for raw/html, raw/json, extracted, manifests.
+- [x] Orchestrator config: YAML defaults for budgets, concurrency, early-stop; run-level overrides; kill switches and circuit breakers; resume/reentry semantics.
+- [x] Emit metrics/alerts per state; tracing context propagation across SQS and Step Functions; stitch traces across WebFetch and LLM extraction.
+- [ ] Feature flags to flip individual states mock↔real (per-state env/vars); document toggling procedure.
+- [ ] DLQ re-drive runbook and helper CLI; example reprocessing flow.
+- [ ] Execution input presets (golden inputs) per city for smoke/e2e tests.
+
+---
 
 ## Epic: Connectors — Google Places (Text, Nearby, Details)
 Labels: MVP, data, backend, google, compliance
@@ -58,10 +96,10 @@ Acceptance criteria
 Tasks
 - [ ] Implement Text Search client + query builder for category/keyword packs; pagination and backoff with jitter.
 - [ ] Implement Nearby Search with adaptive radius and anchor context; enqueue neighbors with NEAR edge hints.
-- [ ] Implement Details with explicit field masks: must-haves (place_id, name, formatted_address, geometry/location, types, rating, user_ratings_total, business_status, photos.photo_reference, html_attributions, opening_hours/weekday_text, website, formatted_phone_number), plus optional extras gated by budget flags.
+- [ ] Implement Details with explicit field masks: must-haves (place_id, name, formatted_address, geometry/location, types, rating, user_ratings_total, business_status, photos.photo_reference, html_attributions).
 - [ ] Photos: store metadata only (photo_reference + attributions); no bulk photo storage; capture attribution strings.
-- [ ] Compliance guardrails: field-mask enforcement, response-filtering, retention tagging (30d), exclusion of Google-only fields from partner APIs by default.
-- [ ] Raw response cache keyed by request hash; idempotency; retry/backoff; error taxonomy.
+- [ ] Compliance guardrails: enforce field masks, response-filtering, retention tagging (30d), exclusion of Google-only fields from partner APIs by default; audit logs.
+- [ ] Raw response cache keyed by request_hash; idempotency; retry/backoff; error taxonomy.
 - [ ] Unit/contract tests using recorded fixtures; redaction of PII and API keys.
 
 ## Epic: Connectors — Open Data & Open Graph (OTM/OSM/Wiki/Tavily)
@@ -101,9 +139,9 @@ Tasks
 - [ ] Tavily Connector: city-scoped queries; scoring and dedup of URL candidates; enqueue web messages to frontier with correlation_id.
 - [ ] Web Fetcher: robots.txt compliance, polite concurrency/QPS, egress allowlist; cache raw HTML/JSON to S3 under raw/html and raw/json.
 - [ ] LLM Extractor: provider-agnostic (Bedrock/OpenAI/Gemini) with bounded JSON schema, timeouts, token and cost guards; write extracted/<city>/<run_id>/<content_hash>.json.
-- [ ] Extraction Schema: define entity JSON schema including confidences, trust_score, coordinates_confidence; validation + contract tests.
-- [ ] Error handling and idempotency: deterministic content_hash; dedupe repeated URLs; retry taxonomy.
+- [ ] Error handling and idempotency: deterministic content_hash; dedupe repeated URLs; retry taxonomy; correlation_id propagation.
 - [ ] Observability: metrics for http_bytes_in, pages_fetched, extractor_token_count, extractor_cost_estimate; traces across fetch→extract.
+- [ ] NOTE: Extraction Schema & Canonical Candidate Schema are defined in Foundations and reused here.
 
 ## Epic: Tavily City Data Targets Manifest (v2)
 Labels: MVP, LLM, data
@@ -133,7 +171,7 @@ Acceptance criteria
 - H3 res 9/10 sweep fills under-dense cells.
 
 Tasks
-- [ ] Primary seeding from Google Text + OTM + Wikidata/Wikipedia + open-data endpoints + (optional) high-trust web-extracted entities; pre-rank primaries; schedule Google Details calls for primaries only.
+- [ ] Primary seeding from Google Text + OTM + Wikidata/Wikipedia + open-data endpoints + (optional) high-trust web-extracted entities; pre-rank primaries; schedule Google Details calls for primaries.
 - [ ] Neighbor expansion around primaries via Google Nearby + OSM/OTM/open-data; create NEAR edges with distances.
 - [ ] Under-dense H3 cell sweep (res 9/10) with coverage thresholds; configurable.
 - [ ] Budget-aware frontier enqueuing (70/30 primaries/secondaries); early-stop on low new_unique_rate.
@@ -205,8 +243,7 @@ Tasks
 - [ ] DB mappers + upsert logic; bbox/h3 precompute (h3_index_8/9/12).
 - [ ] External refs consolidation and preferred externalid selection (Google place_id primaries; OSM/OTM otherwise).
 - [ ] SQL migrations to add recommended indexes if missing.
-- [ ] S3 lifecycle policies:
-      - Google raw json 30d, open-data json 90d, web raw html 90d, extracted json 90d; encryption SSE-S3/KMS.
+- [ ] S3 lifecycle policies: Google raw json 30d, open-data json 90d, web raw html 90d, extracted json 90d; encryption SSE-S3/KMS.
 - [ ] Implement ratings cache policy (persist timestamp; skip refresh within 7 days); exclude Google-only fields from partner API responses by default.
 
 ## Epic: Public APIs — Jobs, list by city, place detail, nearby secondaries (FastAPI v1)
@@ -238,9 +275,9 @@ Acceptance criteria
 - LLM-specific metrics (tokens_in, tokens_out, token_cost_estimate) and web fetch metrics (http_bytes_in, pages_fetched) exposed.
 
 Tasks
-- [ ] Define metrics schema: calls, errors, backoffs, new_unique_rate, dedupe ratio, H3 coverage, cost estimate, duration, extractor_token_count, extractor_cost_estimate, http_bytes_in.
+- [ ] Define metrics schema: calls, errors, backoffs, new_unique_rate, dedupe ratio, H3 coverage, cost estimate, duration_ms, extractor_token_count, extractor_cost_estimate, http_bytes_in.
 - [ ] Tracing propagation (OTEL) across orchestrator, SQS, connectors, LLM, DB writes; link WebFetch→ExtractWithLLM spans.
-- [ ] Alarm definitions and runbooks: error spikes, low new_unique_rate, nearing budget caps (LLM tokens, Tavily, HTTP), DB write failures, under-coverage.
+- [ ] Dashboards and alarms: state timeouts, DLQ depth, budget cap nearing (LLM tokens, Tavily, HTTP), DB write failures, under-coverage, error spikes.
 
 ## Epic: Security & Compliance — Google, Web & Data handling
 Labels: MVP, infra, compliance
@@ -275,24 +312,19 @@ Acceptance criteria
 Tasks
 - [ ] Tile sweep tuning and budget parameter review (70/30 split).
 - [ ] Runbook for city job; incident handling and on-call playbooks.
+- [ ] Golden-run validator: schema checks + basic KPI thresholds (dupes, coord accuracy, address validity) runnable from CI.
 - [ ] Final acceptance checks, data quality sampling, and compliance audit.
 
 ---
 
-## Standalone Tasks
+## Standalone Tasks (optional quick-links)
 Use these as child tasks under the relevant Epics, or as individual issues.
 
-- [ ] Config & Budgets defaults (YAML) and runtime overrides — Labels: MVP, infra, backend
 - [ ] H3 utilities and under-dense cell detection (res 9/10/12) — Labels: MVP, backend, data
 - [ ] Address normalization and geo validation (country-aware) — Labels: MVP, ETL, data
 - [ ] Dedupe similarity functions and thresholds (name/address/geo) — Labels: MVP, ETL, backend
 - [ ] Postgres upserts and index creation — Labels: MVP, Postgres, backend
 - [ ] API performance targets and load testing (p95 ≤ 300 ms) — Labels: MVP, API, observability
 - [ ] Edinburgh-specific open-data sources triage — Labels: MVP, data, LLM
-- [ ] Budget caps per connector and etiquette/compliance (include llm.tokens, tavily.api, web.fetch) — Labels: MVP, infra, backend, compliance
 - [ ] Lineage and citations in additional_content — Labels: MVP, ETL, data
-- [ ] Runbook and incident handling for city jobs — Labels: MVP, infra, QA
-- [ ] Compliance guardrails: field masks, retention, attribution, robots.txt — Labels: MVP, compliance, google, web
 - [ ] Contract tests for Google/OTM/OSM/Socrata/CKAN/ArcGIS/Wikidata adapters — Labels: MVP, QA, backend
-- [ ] LLM extraction prompt templates and schema validators — Labels: MVP, LLM, ETL
-- [ ] Frontier SQS schema docs (maps/web union, trust_score, coordinates_confidence) — Labels: MVP, infra, backend
