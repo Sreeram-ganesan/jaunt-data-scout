@@ -10,6 +10,24 @@
         "run_id": "$$.Execution.Id",
         "start_time": "$$.State.EnteredTime"
       },
+      "Next": "InitBudget"
+    },
+    "InitBudget": {
+      "Type": "Pass",
+      "ResultPath": "$.budget",
+      "Result": {
+        "wall_clock_remaining_seconds": 999999,
+        "tokens_remaining": {
+          "llm": { "tokens": 999999 },
+          "tavily": { "api": 999999 }
+        }
+      },
+      "Next": "InitMetrics"
+    },
+    "InitMetrics": {
+      "Type": "Pass",
+      "ResultPath": "$.metrics",
+      "Result": { "new_unique_rate": 1.0 },
       "Next": "DiscoverWebSources"
     },
     "DiscoverWebSources": {
@@ -77,7 +95,7 @@
       "Type": "Choice",
       "Choices": [
         {
-          "Variable": "$.metrics.new_unique_rate",
+          "Variable": "$.tile_sweep.new_unique_rate",
           "NumericLessThan": 0.05,
           "Next": "Finalize"
         },
