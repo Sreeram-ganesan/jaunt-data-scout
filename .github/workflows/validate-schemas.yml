@@ -1,0 +1,97 @@
+name: Validate Schemas
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'schemas/**'
+      - 'examples/**'
+      - '.github/workflows/validate-schemas.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'schemas/**'
+      - 'examples/**'
+      - '.github/workflows/validate-schemas.yml'
+
+jobs:
+  validate-schemas:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install ajv-cli
+      run: npm install -g ajv-cli
+      
+    - name: Validate frontier web schema and example
+      run: |
+        echo "Validating frontier.web schema and example..."
+        ajv validate -s schemas/frontier.web.json -d examples/frontier/web.example.json --verbose
+        
+    - name: Validate frontier maps schema and example
+      run: |
+        echo "Validating frontier.maps schema and example..."
+        ajv validate -s schemas/frontier.maps.json -d examples/frontier/maps.example.json --verbose
+        
+    - name: Validate canonical candidate schema and example
+      run: |
+        echo "Validating canonical.candidate schema and example..."
+        ajv validate -s schemas/canonical.candidate.json -d examples/canonical/candidate.example.json --verbose
+        
+    - name: Validate extraction web schema and example
+      run: |
+        echo "Validating extraction.web schema and example..."
+        ajv validate -s schemas/extraction.web.json -d examples/extraction/web.example.json --verbose
+        
+    - name: Validate all schemas are valid JSON Schema Draft-07
+      run: |
+        echo "Validating all schemas are valid JSON Schema Draft-07..."
+        for schema in schemas/*.json; do
+          echo "Validating schema: $schema"
+          ajv compile -s "$schema" --spec=draft7 --verbose
+        done
+        
+    - name: Check for additional example files
+      run: |
+        echo "Checking for any additional example files that need validation..."
+        # Find all JSON files in examples directory and validate against corresponding schemas
+        find examples -name "*.json" -type f | while read example_file; do
+          # Extract the schema path from example path
+          # e.g., examples/frontier/web.example.json -> schemas/frontier.web.json
+          # Remove examples/ prefix, replace / with ., remove .example suffix
+          relative_path=$(echo "$example_file" | sed 's|examples/||')
+          schema_name=$(echo "$relative_path" | sed 's|/|.|g' | sed 's|\.example\.json|.json|')
+          schema_path="schemas/$schema_name"
+          
+          if [ -f "$schema_path" ]; then
+            echo "Validating $example_file against $schema_path"
+            ajv validate -s "$schema_path" -d "$example_file" --verbose
+          else
+            echo "Warning: No schema found for example file $example_file (expected $schema_path)"
+            exit 1
+          fi
+        done
+        
+    - name: Summary
+      run: |
+        echo "✅ All schema validations passed!"
+        echo ""
+        echo "Validated schemas:"
+        echo "- schemas/frontier.web.json"
+        echo "- schemas/frontier.maps.json"
+        echo "- schemas/canonical.candidate.json"
+        echo "- schemas/extraction.web.json"
+        echo ""
+        echo "Validated examples:"
+        echo "- examples/frontier/web.example.json"
+        echo "- examples/frontier/maps.example.json"
+        echo "- examples/canonical/candidate.example.json"
+        echo "- examples/extraction/web.example.json"

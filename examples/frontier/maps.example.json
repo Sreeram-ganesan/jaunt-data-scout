@@ -1,0 +1,19 @@
+{
+  "type": "maps",
+  "city": "Edinburgh",
+  "lat": 55.9533,
+  "lng": -3.1883,
+  "radius": 1000,
+  "category": "tourist_attraction",
+  "correlation_id": "f47ac10b-58cc-4372-a567-0e02b2c3d480",
+  "trust_score": 0.95,
+  "coordinates_confidence": 0.98,
+  "priority": "medium",
+  "search_type": "nearby",
+  "place_types": ["tourist_attraction", "point_of_interest", "establishment"],
+  "metadata": {
+    "anchor_place_id": "ChIJA01I-8nXUKwRMQ1KZ7H1N0Y",
+    "search_depth": 1,
+    "h3_cell": "8b1fb46622dffff"
+  }
+}
