@@ -3,6 +3,20 @@ locals {
     Project     = "data-scout"
     Environment = var.environment
   }
+  # New: list of Lambda ARNs SFN needs to invoke
+  lambda_arns = [
+    var.lambda_discover_web_sources_arn,
+    var.lambda_discover_targets_arn,
+    var.lambda_seed_primaries_arn,
+    var.lambda_expand_neighbors_arn,
+    var.lambda_tile_sweep_arn,
+    var.lambda_web_fetch_arn,
+    var.lambda_extract_with_llm_arn,
+    var.lambda_geocode_validate_arn,
+    var.lambda_dedupe_canonicalize_arn,
+    var.lambda_persist_arn,
+    var.lambda_rank_arn,
+  ]
 }
 
 data "aws_iam_policy_document" "sfn_assume" {
@@ -72,6 +86,17 @@ data "aws_iam_policy_document" "sfn_policy" {
       aws_s3_bucket.raw.arn,
       "${aws_s3_bucket.raw.arn}/*"
     ]
+  }
+
+  # New: allow SFN role to invoke provided Lambdas (base + version/alias ARNs)
+  statement {
+    sid     = "AllowInvokeLambda"
+    effect  = "Allow"
+    actions = ["lambda:InvokeFunction"]
+    resources = concat(
+      local.lambda_arns,
+      [for arn in local.lambda_arns : "${arn}:*"]
+    )
   }
 }
 

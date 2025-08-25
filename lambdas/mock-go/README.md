@@ -6,6 +6,8 @@ It mirrors the Python mock handler’s behavior:
 - Reads STATE_NAME from env and returns it in the response (defaults to "mock").
 - Echoes up to 5 items from the input.
 - Returns new_unique_rate from input if present; otherwise defaults to 0.2.
+- Adds metrics.new_unique_rate for Step Functions Choice states that use $.metrics.new_unique_rate (EarlyStop gate).
+- Preserves metrics from input when present and ensures metrics.new_unique_rate is set.
 - Preserves job context fields like job_id, city, s3_prefix, budgets, kill_switches, early_stop, timeouts.
 
 ## Prerequisites
@@ -111,6 +113,18 @@ Region:
 - Logs show “Handler not found”:
   - Ensure handler is set to "bootstrap" and runtime is "provided.al2".
   - Ensure function.zip contains the "bootstrap" executable.
+
+- Exec format error (Runtime.InvalidEntrypoint / fork/exec /var/task/bootstrap):
+  - Cause: binary arch ≠ Lambda function arch.
+  - Fix (x86_64 example):
+    - make deploy ARCH=x86_64 REGION=us-east-1
+  - Fix (arm64 example):
+    - make deploy ARCH=arm64 REGION=us-east-1
+  - Or force the function’s architecture to match your build, then update code:
+    - make set-arch ARCH=arm64 REGION=us-east-1
+    - make update-code REGION=us-east-1
+  - Inspect current function architecture:
+    - make arch REGION=us-east-1
 
 ## Example end-to-end
 

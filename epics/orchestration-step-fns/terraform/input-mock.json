@@ -1,0 +1,1 @@
+ { "job_id": "city-discovery-edinburgh-001", "city": "edinburgh", "s3_prefix": "s3://jaunt-dev-data-scout-raw-253490763512/manifests/edinburgh/run-001", "budgets": { "api_calls": 1000, "llm_tokens": 5000, "wall_clock_hours": 0.5 }, "kill_switches": {}, "timeouts": { "per_state_seconds": 30 }, "new_unique_rate": 0.2 }

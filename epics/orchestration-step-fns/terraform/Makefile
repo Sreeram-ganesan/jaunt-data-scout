@@ -19,6 +19,18 @@ ENV          ?= mock
 AWS_PROFILE  ?= default
 AWS_REGION   ?= us-east-1
 BACKEND_CONFIG ?=
+# New: defaults for SFN execution testing
+NAME         ?= city-discovery-edinburgh-001
+INPUT        ?= input-mock.json
+
+# New: Outputs (override as needed)
+FRONTIER_DLQ_URL        ?= https://sqs.us-east-1.amazonaws.com/253490763512/jaunt-dev-frontier-dlq
+FRONTIER_QUEUE_URL      ?= https://sqs.us-east-1.amazonaws.com/253490763512/jaunt-dev-frontier
+S3_BUCKET_NAME          ?= jaunt-dev-data-scout-raw-253490763512
+S3_RAW_CACHE_BUCKET     ?= jaunt-dev-data-scout-raw-253490763512
+SQS_DLQ_QUEUE_URL       ?= https://sqs.us-east-1.amazonaws.com/253490763512/jaunt-dev-frontier-dlq
+SQS_FRONTIER_QUEUE_URL  ?= https://sqs.us-east-1.amazonaws.com/253490763512/jaunt-dev-frontier
+STATE_MACHINE_ARN       ?= arn:aws:states:us-east-1:253490763512:stateMachine:data-scout-orchestration-step-function
 
 # Terraform locations/files
 TF_DIR     := $(CURDIR)
@@ -30,7 +42,8 @@ export AWS_PROFILE
 export AWS_REGION
 
 # Helpers
-INIT_BACKEND := $(if $(BACKEND_CONFIG),-blackend-config=$(BACKEND_CONFIG),)
+# Fixed: correct -backend-config flag
+INIT_BACKEND := $(if $(BACKEND_CONFIG),-backend-config=$(BACKEND_CONFIG),)
 
 .PHONY: help
 help:
@@ -48,6 +61,8 @@ help:
 	@echo "  graph       : terraform graph -> graph.svg (requires graphviz 'dot')"
 	@echo "  vars        : print resolved variables"
 	@echo "  clean       : remove local plan/output artifacts"
+	@echo "  start-exec  : start a Step Functions execution (requires STATE_MACHINE_ARN; optional INPUT and NAME)"
+	@echo "  echo-outputs: print common resource outputs (URLs/ARN)"
 
 .PHONY: vars
 vars:
@@ -91,6 +106,7 @@ destroy: workspace
 .PHONY: outputs
 outputs:
 	@terraform -chdir=$(TF_DIR) output -json | tee $(OUT_FILE) >/dev/null
+	@$(MAKE) --no-print-directory echo-outputs
 
 .PHONY: validate
 validate:
@@ -113,6 +129,31 @@ graph:
 	else \
 	  echo "'dot' (graphviz) not found; skipping graph.svg"; \
 	fi
+
+# New: Print outputs block
+.PHONY: echo-outputs
+echo-outputs:
+	@echo "Outputs:"
+	@echo "frontier_dlq_url = \"$(FRONTIER_DLQ_URL)\""
+	@echo "frontier_queue_url = \"$(FRONTIER_QUEUE_URL)\""
+	@echo "s3_bucket_name = \"$(S3_BUCKET_NAME)\""
+	@echo "s3_raw_cache_bucket = \"$(S3_RAW_CACHE_BUCKET)\""
+	@echo "sqs_dlq_queue_url = \"$(SQS_DLQ_QUEUE_URL)\""
+	@echo "sqs_frontier_queue_url = \"$(SQS_FRONTIER_QUEUE_URL)\""
+	@echo "state_machine_arn = \"$(STATE_MACHINE_ARN)\""
+
+# New: Start a Step Functions execution from a JSON input
+.PHONY: start-exec
+start-exec:
+	@$(MAKE) --no-print-directory echo-outputs
+	@if [ -z "$(STATE_MACHINE_ARN)" ]; then echo "Set STATE_MACHINE_ARN=arn:aws:states:...:stateMachine:..."; exit 1; fi
+	@if [ ! -f "$(INPUT)" ]; then echo "Input file '$(INPUT)' not found. Override with INPUT=..."; exit 1; fi
+	@echo "Starting execution: $(NAME)"
+	@aws stepfunctions start-execution \
+	  --state-machine-arn "$(STATE_MACHINE_ARN)" \
+	  --name "$(NAME)" \
+	  --input file://$(INPUT) \
+	  --region $(AWS_REGION)
 
 .PHONY: clean
 clean:

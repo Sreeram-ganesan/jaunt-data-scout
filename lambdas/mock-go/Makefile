@@ -129,14 +129,28 @@ create-role:
 deploy: package
 	@set -euo pipefail; \
 	if aws lambda get-function --function-name $(FUNCTION_NAME) --region $(REGION) >/dev/null 2>&1; then \
-	  echo "Function exists. Updating code ..."; \
+	  echo "Function exists. Checking architecture ..."; \
+	  CURR_ARCH=$$(aws lambda get-function-configuration --function-name $(FUNCTION_NAME) --query 'Architectures[0]' --output text --region $(REGION) 2>/dev/null || true); \
+	  echo "Current: $$CURR_ARCH, Desired: $(LAMBDA_ARCH_NORM)"; \
+	  if [ "$$CURR_ARCH" != "$(LAMBDA_ARCH_NORM)" ] && [ "$$CURR_ARCH" != "None" ]; then \
+	    echo "Updating architecture to $(LAMBDA_ARCH_NORM) ..."; \
+	    aws lambda update-function-configuration \
+	      --function-name $(FUNCTION_NAME) \
+	      --architectures $(LAMBDA_ARCH_NORM) \
+	      --region $(REGION) >/dev/null; \
+	    echo "Waiting for configuration update to complete ..."; \
+	    until [ "$$(aws lambda get-function-configuration --function-name $(FUNCTION_NAME) --query 'LastUpdateStatus' --output text --region $(REGION))" = "Successful" ]; do \
+	      sleep 2; \
+	    done; \
+	  fi; \
+	  echo "Updating code for $(FUNCTION_NAME) ..."; \
 	  aws lambda update-function-code \
 	    --function-name $(FUNCTION_NAME) \
 	    --zip-file fileb://$(ZIP) \
 	    --region $(REGION) >/dev/null; \
-	  echo "Updated code for $(FUNCTION_NAME)."; \
+	  echo "Updated $(FUNCTION_NAME)."; \
 	else \
-	  echo "Creating function $(FUNCTION_NAME) ..."; \
+	  echo "Creating function $(FUNCTION_NAME) (arch $(LAMBDA_ARCH_NORM)) ..."; \
 	  aws lambda create-function \
 	    --function-name $(FUNCTION_NAME) \
 	    --runtime $(RUNTIME) \
@@ -207,3 +221,24 @@ tidy:
 .PHONY: clean
 clean:
 	rm -f $(BOOTSTRAP) $(ZIP)
+
+.PHONY: arch
+arch:
+	@aws lambda get-function-configuration \
+	  --function-name $(FUNCTION_NAME) \
+	  --query 'Architectures[0]' \
+	  --output text \
+	  --region $(REGION)
+
+.PHONY: set-arch
+set-arch:
+	@echo "Setting architecture to $(LAMBDA_ARCH_NORM) for $(FUNCTION_NAME) ..."
+	@aws lambda update-function-configuration \
+	  --function-name $(FUNCTION_NAME) \
+	  --architectures $(LAMBDA_ARCH_NORM) \
+	  --region $(REGION) >/dev/null
+	@echo "Waiting for configuration update to complete ..."
+	@until [ "$$(aws lambda get-function-configuration --function-name $(FUNCTION_NAME) --query 'LastUpdateStatus' --output text --region $(REGION))" = "Successful" ]; do \
+	  sleep 2; \
+	done
+	@echo "Done."
