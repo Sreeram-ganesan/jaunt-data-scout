@@ -26,10 +26,10 @@ Acceptance criteria
 - DLQ re-drive runbook and script exist; DLQ payload schema compatible with reprocessing path.
 
 Tasks
-- [ ] Contracts (JSON Schema + docs + CI validation)
-  - [ ] Frontier message schemas (maps/web union) incl. optional trust_score, coordinates_confidence, correlation_id; examples in repo.
-  - [ ] Canonical candidate schema (normalized entity) with lineage and confidences.
-  - [ ] Web extraction output schema; strict validation and contract tests.
+- [x] Contracts (JSON Schema + docs + CI validation)
+  - [x] Frontier message schemas (maps/web union) incl. optional trust_score, coordinates_confidence, correlation_id; examples in repo.
+  - [x] Canonical candidate schema (normalized entity) with lineage and confidences.
+  - [x] Web extraction output schema; strict validation and contract tests.
 - [ ] Config & budgets
   - [ ] YAML defaults for budgets, concurrency, early-stop; environment overrides.
   - [ ] Budget token taxonomy finalized (google.text, google.nearby, google.details, overpass, otm, wiki, tavily.api, web.fetch, llm.tokens, nominatim).
