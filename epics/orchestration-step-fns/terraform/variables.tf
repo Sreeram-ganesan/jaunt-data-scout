@@ -95,6 +95,18 @@ variable "lambda_rank_arn" {
   type = string
 }
 
+# Security and encryption variables
+variable "enable_kms_encryption" {
+  description = "Enable KMS encryption for S3 buckets instead of AES256"
+  type        = bool
+  default     = false
+}
+
+variable "kms_key_id" {
+  description = "KMS key ID for S3 encryption (only used if enable_kms_encryption is true)"
+  type        = string
+  default     = null
+}
 # Feature flags to control mock vs real implementations
 variable "mock_lambda_arn" {
   description = "ARN of the mock Lambda function to use for states configured as mock"

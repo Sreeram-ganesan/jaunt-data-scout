@@ -33,10 +33,10 @@ Tasks
 - [x] Config & budgets
   - [x] YAML defaults for budgets, concurrency, early-stop; environment overrides.
   - [x] Budget token taxonomy finalized (google.text, google.nearby, google.details, overpass, otm, wiki, tavily.api, web.fetch, llm.tokens, nominatim).
-- [ ] Secrets/IAM/egress
-  - [ ] Secrets Manager wiring (Google, Tavily, OTM, DB, LLM); rotation policy documented.
-  - [ ] IAM least-privilege roles and S3 policies; SSE-S3/KMS and access logs enabled.
-  - [ ] VPC egress allowlists and DNS for WebFetch/LLM; robots/ToS headers enforced at fetcher.
+- [x] Secrets/IAM/egress
+  - [x] Secrets Manager wiring (Google, Tavily, OTM, DB, LLM); rotation policy documented.
+  - [x] IAM least-privilege roles and S3 policies; SSE-S3/KMS and access logs enabled.
+  - [x] VPC egress allowlists and DNS for WebFetch/LLM; robots/ToS headers enforced at fetcher.
 - [ ] Observability baseline
   - [x] Add OFF-by-default flags + conditional IAM for SFN logging/tracing/dashboards/alarms; add README and envs/off-by-default.tfvars.
   - [ ] Enable SFN logging/tracing in non-prod by setting flags (e.g., sfn_log_level, sfn_log_group_arn) and validate plan/apply.
