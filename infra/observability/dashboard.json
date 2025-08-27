@@ -1,0 +1,146 @@
+{
+  "widgets": [
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 0,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "AWS/StepFunctions", "ExecutionsFailed", "StateMachineArn", "${state_machine_arn}" ],
+          [ ".", "ExecutionThrottled", ".", "." ],
+          [ ".", "ExecutionsTimedOut", ".", "." ],
+          [ ".", "ExecutionsSucceeded", ".", "." ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "${aws_region}",
+        "title": "Step Functions Execution Status",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 0,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "AWS/SQS", "ApproximateNumberOfMessagesVisible", "QueueName", "${frontier_queue_name}" ],
+          [ ".", ".", ".", "${dlq_queue_name}" ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "${aws_region}",
+        "title": "SQS Queue Depth",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 6,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "JauntDataScout", "BudgetCapUtilization", "Service", "orchestrator", { "stat": "Average" } ],
+          [ "...", "llm", ".", "." ],
+          [ "...", "tavily", ".", "." ],
+          [ "...", "web_fetch", ".", "." ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "${aws_region}",
+        "title": "Budget Cap Utilization",
+        "period": 300,
+        "yAxis": {
+          "left": {
+            "min": 0,
+            "max": 100
+          }
+        }
+      }
+    },
+    {
+      "type": "metric",
+      "x": 8,
+      "y": 6,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "JauntDataScout", "Calls", "Service", "orchestrator" ],
+          [ ".", "Errors", ".", "." ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "${aws_region}",
+        "title": "JauntDataScout API Calls & Errors",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 16,
+      "y": 6,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "JauntDataScout", "NewUniqueRate", "Service", "orchestrator", { "stat": "Average" } ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "${aws_region}",
+        "title": "New Unique Rate",
+        "period": 300,
+        "yAxis": {
+          "left": {
+            "min": 0,
+            "max": 100
+          }
+        }
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 12,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "JauntDataScout", "TokensIn", "Service", "llm", { "stat": "Sum" } ],
+          [ ".", "TokensOut", ".", ".", { "stat": "Sum" } ],
+          [ ".", "TokenCostEstimate", ".", ".", { "stat": "Sum" } ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "${aws_region}",
+        "title": "LLM Token Usage & Costs",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 12,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "JauntDataScout", "HTTPBytesIn", "Service", "web_fetch", { "stat": "Sum" } ],
+          [ ".", "Duration", ".", ".", { "stat": "Average" } ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "${aws_region}",
+        "title": "Web Fetch Metrics",
+        "period": 300
+      }
+    }
+  ]
+}
