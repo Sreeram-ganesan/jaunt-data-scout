@@ -1,10 +1,10 @@
-# Safe defaults: no logging, no tracing, no dashboards, no alarms
-enable_observability         = false
-enable_cloudwatch_dashboards = false
-enable_cloudwatch_alarms     = false
-sfn_log_level                = "OFF"
-sfn_include_execution_data   = false
-enable_sfn_tracing           = false
+# Example: observability features ENABLED
+enable_observability         = true
+enable_cloudwatch_dashboards = true
+enable_cloudwatch_alarms     = true
+sfn_log_level                = "ERROR"
+sfn_include_execution_data   = true
+enable_sfn_tracing           = true
 
 # Mock Lambda ARNs for testing (replace with your actual ARNs)
 lambda_discover_web_sources_arn = "arn:aws:lambda:us-east-1:123456789012:function:mock"
@@ -19,5 +19,6 @@ lambda_dedupe_canonicalize_arn  = "arn:aws:lambda:us-east-1:123456789012:functio
 lambda_persist_arn              = "arn:aws:lambda:us-east-1:123456789012:function:mock"
 lambda_rank_arn                 = "arn:aws:lambda:us-east-1:123456789012:function:mock"
 
-# When you later enable logging, set this to a real Log Group ARN, e.g.:
-# sfn_log_group_arn = "arn:aws:logs:us-east-1:123456789012:log-group:/aws/states/jaunt-orchestrator:*"
+# Note: sfn_log_group_arn will be automatically set to the CloudWatch log group created by terraform
+# You can also override it with a custom log group ARN if needed:
+# sfn_log_group_arn = "arn:aws:logs:us-east-1:123456789012:log-group:/aws/states/custom-log-group:*"
