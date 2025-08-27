@@ -55,7 +55,7 @@ Tasks and subtasks
 Integrations readiness checklist
 - [ ] IAM roles/policies scoped to least privilege
 - [ ] Environment-specific configuration (dev/stage/prod)
-- [ ] Runbook for common failures (DLQ, throttling)
+- [x] Runbook for common failures (DLQ, throttling)
 - [ ] Cost guardrails (budgets, alerts)
 - [ ] Observability dashboards (optional for MVP)
 
