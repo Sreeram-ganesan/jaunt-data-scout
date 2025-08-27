@@ -22,7 +22,7 @@ Acceptance criteria
 - JSON Schemas published for: frontier messages (maps/web union), canonical candidate, and web extraction outputs; CI contract tests validate producers/consumers.
 - Config defaults (YAML) present for budgets/concurrency/early-stop with run-level overrides; feature flags can flip per-state mock/real in Step Functions.
 - Secrets in AWS Secrets Manager and IAM least-privilege roles for each Lambda; VPC egress allowlists configured for WebFetch/LLM.
-- Step Functions logging + tracing enabled; Lambdas emit EMF metrics and propagate correlation_id; CloudWatch dashboards/alarms in place.
+- Step Functions logging/tracing are wired but gated: defaults OFF, can be enabled via Terraform flags; Lambdas emit EMF metrics and propagate correlation_id when enabled; dashboards/alarms are disabled by default and can be enabled via flags.
 - DLQ re-drive runbook and script exist; DLQ payload schema compatible with reprocessing path.
 
 Tasks
@@ -38,7 +38,8 @@ Tasks
   - [ ] IAM least-privilege roles and S3 policies; SSE-S3/KMS and access logs enabled.
   - [ ] VPC egress allowlists and DNS for WebFetch/LLM; robots/ToS headers enforced at fetcher.
 - [ ] Observability baseline
-  - [ ] Enable Step Functions loggingConfiguration (ALL) and tracingConfiguration (X-Ray).
+  - [x] Add OFF-by-default flags + conditional IAM for SFN logging/tracing/dashboards/alarms; add README and envs/off-by-default.tfvars.
+  - [ ] Enable SFN logging/tracing in non-prod by setting flags (e.g., sfn_log_level, sfn_log_group_arn) and validate plan/apply.
   - [ ] EMF metrics per Lambda: calls, errors, retries, duration_ms, http_bytes_in, tokens_in, tokens_out, token_cost_estimate, new_unique_rate.
   - [ ] Correlation_id propagation across SQS → Lambdas; include in logs and spans.
   - [ ] Dashboards + alarms: ExecutionFailed, state timeouts, DLQ depth, budget cap nearing (LLM/Tavily/HTTP), error spikes.
@@ -265,6 +266,8 @@ Tasks
 
 ## Epic: Observability — Metrics, traces, and alerts (v2)
 Labels: MVP, observability, infra
+
+**Note:** All dashboards/alarms must respect the OFF-by-default flags and be disabled by default in Terraform (completed in PR #28).
 
 Goals
 - Provide visibility into yield, dupes, coverage, and cost; alerts for anomalies; distributed tracing.
