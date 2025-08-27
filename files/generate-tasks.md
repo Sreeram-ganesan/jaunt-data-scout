@@ -126,6 +126,38 @@ Tasks
 ## Epic: Web Discovery & Extraction — Tavily → WebFetch → LLM
 Labels: MVP, LLM, data, web, crawler
 
+<!-- Sprint-1: Start here for Step Functions' first connector state (DiscoverWebSources) -->
+Sprint-1 (Start here): E2E slice without LLM (Tavily → Frontier → WebFetch → S3)
+- [ ] Tavily Connector Lambda (DiscoverWebSources)
+  - [ ] City-scoped query pack v1 (T1/T2-lite) → Tavily search
+  - [ ] Dedupe URLs by normalized_url/domain; assign optional trust_score
+  - [ ] Enqueue SQS frontier messages (type=web) with correlation_id, budget_token=tavily.api, city/run_id
+  - [ ] Respect per-run budgets and early-stop gates; idempotent request hashing
+  - [ ] Emit EMF metrics: calls, errors, pages_enqueued, new_unique_rate
+  - [ ] Feature flag: enable_discover_web_sources
+- [ ] Step Functions wiring
+  - [ ] Hook DiscoverWebSources state to Tavily Lambda ARN; retries/backoff; DLQ on failure
+  - [ ] Budget + early-stop integration; kill switch via job params
+- [ ] Web Fetcher MVP (robots + cache)
+  - [ ] robots.txt compliance, egress allowlist, polite QPS/concurrency
+  - [ ] GET/HEAD, max size guard; content_type sniff (html/json)
+  - [ ] Cache to S3: raw/html|raw/json at s3://<bucket>/raw/{html|json}/{city}/{run_id}/{content_hash}
+  - [ ] Emit EMF: pages_fetched, http_bytes_in, duration_ms; propagate correlation_id
+  - [ ] Feature flag: enable_web_fetch
+- [ ] Observability & compliance
+  - [ ] Correlation_id propagation SQS → Lambdas; include in logs/spans
+  - [ ] X-Ray/OTEL stitched spans DiscoverWebSources → WebFetch (respect OFF-by-default flags)
+  - [ ] Basic alarms OFF-by-default (enabled via tfvars)
+- [ ] Secrets/IAM/egress
+  - [ ] Secrets Manager keys: TAVILY_API_KEY; VPC egress allowlist for WebFetch/LLM domains
+  - [ ] IAM least-privilege for SQS/S3; SSE-S3/KMS on buckets
+- [ ] S1 Acceptance (Edinburgh)
+  - [ ] End-to-end run produces ≥100 unique URL frontier messages and ≥80 successfully fetched pages cached to S3
+  - [ ] All requests within tavily.api and web.fetch budgets; robots respected; no PII/API keys in logs
+  - [ ] Metrics visible in CW: pages_enqueued, pages_fetched, http_bytes_in
+
+<!-- LLM extraction will be enabled in Sprint-2 by flipping enable_llm_extractor and wiring ExtractWithLLM. -->
+
 Goals
 - Discover city-relevant sources via Tavily, fetch pages/APIs, and extract structured POIs using an LLM extractor with bounded schema.
 
