@@ -1,5 +1,3 @@
-variable "s3_bucket_name" { type = string }
-
 data "aws_caller_identity" "current" {}
 
 locals {

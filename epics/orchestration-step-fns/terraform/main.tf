@@ -20,4 +20,32 @@ module "sfn" {
   lambda_rank_arn                 = var.lambda_rank_arn
 
   frontier_dlq_url = aws_sqs_queue.frontier_dlq.id
+
+  # Observability variables
+  sfn_log_level              = var.sfn_log_level
+  sfn_include_execution_data = var.sfn_include_execution_data
+  enable_sfn_tracing         = var.enable_sfn_tracing
+  sfn_log_group_arn          = var.sfn_log_level != "OFF" ? "${aws_cloudwatch_log_group.sfn[0].arn}:*" : ""
 }
+
+# Optional: CloudWatch dashboards and alarms (enabled only when flags are set)
+# Note: Observability module has pre-existing issues, disabled for now
+# module "observability" {
+#   count  = var.enable_observability && (var.enable_cloudwatch_dashboards || var.enable_cloudwatch_alarms) ? 1 : 0
+#   source = "../../../infra/observability"
+#
+#   dashboard_name      = "${local.step_function_name}-dashboard"
+#   state_machine_arn   = module.sfn.state_machine_arn
+#   frontier_queue_name = aws_sqs_queue.frontier.name
+#   dlq_queue_name      = aws_sqs_queue.frontier_dlq.name
+#   aws_region          = var.aws_region
+#
+#   # Optional alarm email notification
+#   alarm_email = ""
+#
+#   # Alarm thresholds (can be customized via variables if needed)
+#   dlq_depth_threshold         = 10
+#   execution_failure_threshold = 5
+#   error_rate_threshold        = 10
+#   budget_cap_threshold        = 90
+# }

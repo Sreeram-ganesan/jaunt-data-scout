@@ -20,23 +20,17 @@ resource "aws_sfn_state_machine" "orchestrator_v2" {
   role_arn   = var.sfn_role_arn
   definition = local.asl
 
-  logging_configuration {
-    level                  = "ALL"
-    include_execution_data = true
-    log_destination        = "${aws_cloudwatch_log_group.sfn_logs.arn}:*"
-  }
-
   tracing_configuration {
-    enabled = true
+    enabled = var.enable_sfn_tracing
+  }
+
+  dynamic "logging_configuration" {
+    for_each = var.sfn_log_level == "OFF" ? [] : [1]
+    content {
+      include_execution_data = var.sfn_include_execution_data
+      level                  = var.sfn_log_level
+      log_destination        = var.sfn_log_group_arn
+    }
   }
 }
 
-resource "aws_cloudwatch_log_group" "sfn_logs" {
-  name              = "/aws/stepfunctions/${var.state_machine_name}"
-  retention_in_days = 14
-
-  tags = {
-    Project     = "data-scout"
-    Environment = "dev"
-  }
-}
