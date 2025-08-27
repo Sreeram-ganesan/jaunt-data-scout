@@ -38,10 +38,12 @@ Options:
   --region REGION         AWS region (default: $DEFAULT_REGION)
   --profile PROFILE       AWS profile (default: $DEFAULT_PROFILE)
   --env ENVIRONMENT       Environment (default: $DEFAULT_ENVIRONMENT)
+  --project-prefix PREFIX Project prefix (default: $PROJECT_PREFIX)
   --timeout SECONDS       Test timeout in seconds (default: 1800)
   --interval SECONDS      Check interval in seconds (default: 30)
   --verbose               Enable verbose output
   --city CITY             Test city (default: edinburgh)
+  --fail-fast BOOL        Override orchestrator.fail_fast (true|false)
   --help                  Show this help message
 
 Examples:
@@ -60,20 +62,20 @@ log() {
     
     case $level in
         INFO)
-            echo -e "${BLUE}[$timestamp] INFO: $message${NC}"
+            echo -e "${BLUE}[$timestamp] INFO: $message${NC}" >&2
             ;;
         WARN)
-            echo -e "${YELLOW}[$timestamp] WARN: $message${NC}"
+            echo -e "${YELLOW}[$timestamp] WARN: $message${NC}" >&2
             ;;
         ERROR)
-            echo -e "${RED}[$timestamp] ERROR: $message${NC}"
+            echo -e "${RED}[$timestamp] ERROR: $message${NC}" >&2
             ;;
         SUCCESS)
-            echo -e "${GREEN}[$timestamp] SUCCESS: $message${NC}"
+            echo -e "${GREEN}[$timestamp] SUCCESS: $message${NC}" >&2
             ;;
         DEBUG)
             if [ "$VERBOSE" = true ]; then
-                echo -e "[$timestamp] DEBUG: $message"
+                echo -e "[$timestamp] DEBUG: $message" >&2
             fi
             ;;
     esac
@@ -121,20 +123,40 @@ check_infrastructure() {
         exit 1
     fi
     
-    # Check SQS queues
-    FRONTIER_URL="https://sqs.${REGION}.amazonaws.com/${AWS_ACCOUNT}/${PROJECT_PREFIX}-${ENVIRONMENT}-frontier"
-    DLQ_URL="https://sqs.${REGION}.amazonaws.com/${AWS_ACCOUNT}/${PROJECT_PREFIX}-${ENVIRONMENT}-frontier-dlq"
-    
-    for queue_url in "$FRONTIER_URL" "$DLQ_URL"; do
-        if ! aws sqs get-queue-attributes \
-            --queue-url "$queue_url" \
-            --attribute-names QueueArn \
-            --profile "$PROFILE" \
-            --region "$REGION" &> /dev/null; then
-            log ERROR "Queue not found: $queue_url"
-            exit 1
-        fi
-    done
+    # Resolve SQS queue URLs dynamically by name
+    FRONTIER_NAME="${PROJECT_PREFIX}-${ENVIRONMENT}-frontier"
+    DLQ_NAME="${PROJECT_PREFIX}-${ENVIRONMENT}-frontier-dlq"
+    log INFO "Expected frontier queue name: $FRONTIER_NAME"
+    log INFO "Expected DLQ name: $DLQ_NAME"
+
+    FRONTIER_URL=$(aws sqs get-queue-url \
+        --queue-name "$FRONTIER_NAME" \
+        --profile "$PROFILE" \
+        --region "$REGION" \
+        --query 'QueueUrl' \
+        --output text 2>/dev/null || true)
+
+    if [ -z "$FRONTIER_URL" ] || [ "$FRONTIER_URL" = "None" ] || [ "$FRONTIER_URL" = "null" ]; then
+        log ERROR "Queue not found: $FRONTIER_NAME in region $REGION (account: $AWS_ACCOUNT)"
+        log ERROR "Fix: deploy with matching flags (e.g., cd terraform && make apply ENV=$ENVIRONMENT PROJECT_PREFIX=$PROJECT_PREFIX)"
+        exit 1
+    fi
+
+    DLQ_URL=$(aws sqs get-queue-url \
+        --queue-name "$DLQ_NAME" \
+        --profile "$PROFILE" \
+        --region "$REGION" \
+        --query 'QueueUrl' \
+        --output text 2>/dev/null || true)
+
+    if [ -z "$DLQ_URL" ] || [ "$DLQ_URL" = "None" ] || [ "$DLQ_URL" = "null" ]; then
+        log ERROR "Queue not found: $DLQ_NAME in region $REGION (account: $AWS_ACCOUNT)"
+        log ERROR "Fix: deploy with matching flags (e.g., cd terraform && make apply ENV=$ENVIRONMENT PROJECT_PREFIX=$PROJECT_PREFIX)"
+        exit 1
+    fi
+
+    log INFO "Resolved frontier queue URL: $FRONTIER_URL"
+    log INFO "Resolved DLQ URL: $DLQ_URL"
     
     # Check S3 bucket
     S3_BUCKET="${PROJECT_PREFIX}-${ENVIRONMENT}-data-scout-raw-${AWS_ACCOUNT}"
@@ -161,6 +183,26 @@ prepare_test_input() {
         log ERROR "Invalid JSON in input file: $INPUT_FILE"
         exit 1
     fi
+
+    # Normalize payload: ensure orchestrator exists and has fail_fast (default false or CLI override)
+    PREPARED_PAYLOAD=$(jq -c --arg fail_fast "${FAIL_FAST_OPT:-}" '
+      .orchestrator = (.orchestrator // {}) |
+      .orchestrator.fail_fast =
+        (if $fail_fast == "" then
+            (.orchestrator.fail_fast // false)
+         else
+            # parse string to boolean
+            (if ($fail_fast|test("^(?i:true)$")) then true else false end)
+         end)
+    ' "$INPUT_FILE") || {
+        log ERROR "Failed to prepare payload from: $INPUT_FILE"
+        exit 1
+    }
+
+    if [ -z "$PREPARED_PAYLOAD" ] || [ "$PREPARED_PAYLOAD" = "null" ]; then
+        log ERROR "Prepared payload is empty"
+        exit 1
+    fi
     
     log DEBUG "Using input file: $INPUT_FILE"
     log SUCCESS "Test input prepared"
@@ -175,7 +217,8 @@ start_execution() {
     EXECUTION_ARN=$(aws stepfunctions start-execution \
         --state-machine-arn "$STATE_MACHINE_ARN" \
         --name "$execution_name" \
-        --input file://"$INPUT_FILE" \
+        --input "$PREPARED_PAYLOAD" \
+        --cli-binary-format raw-in-base64-out \
         --profile "$PROFILE" \
         --region "$REGION" \
         --query 'executionArn' \
@@ -282,6 +325,24 @@ show_execution_details() {
             --max-results 10 \
             --reverse-order \
             --query 'events[].{timestamp: timestamp, type: type, stateEnteredEventDetails: stateEnteredEventDetails, taskFailedEventDetails: taskFailedEventDetails}'
+
+        # Try to surface the input to the Choice state 'ToDLQOrContinue' if logging captured it
+        local choice_input
+        choice_input=$(aws stepfunctions get-execution-history \
+            --execution-arn "$execution_arn" \
+            --profile "$PROFILE" \
+            --region "$REGION" \
+            --max-results 50 \
+            --reverse-order \
+            --output json 2>/dev/null | jq -r '
+              (.events[] | select(.type=="ChoiceStateEntered" and .stateEnteredEventDetails.name=="ToDLQOrContinue") | .stateEnteredEventDetails.input) // empty
+            ' || true)
+        if [ -n "$choice_input" ]; then
+            log INFO "Input at 'ToDLQOrContinue' (from history):"
+            echo "$choice_input" | jq . >&2 || echo "$choice_input" >&2
+        else
+            log DEBUG "State input not available; enable execution data logging on the state machine to capture it."
+        fi
     fi
 }
 
@@ -471,6 +532,7 @@ run_integration_test() {
 
 # Parse command line arguments
 CITY="edinburgh"
+FAIL_FAST_OPT=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -486,6 +548,10 @@ while [[ $# -gt 0 ]]; do
             ENVIRONMENT="$2"
             shift 2
             ;;
+        --project-prefix)
+            PROJECT_PREFIX="$2"
+            shift 2
+            ;;
         --timeout)
             TEST_TIMEOUT="$2"
             shift 2
@@ -496,6 +562,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --city)
             CITY="$2"
+            shift 2
+            ;;
+        --fail-fast)
+            FAIL_FAST_OPT="$2"
             shift 2
             ;;
         --verbose)
