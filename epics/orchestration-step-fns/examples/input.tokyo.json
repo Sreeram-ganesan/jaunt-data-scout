@@ -1,0 +1,19 @@
+{
+    "job_id": "city-discovery-tokyo-001",
+    "city": "Tokyo",
+    "seed": { 
+      "type": "map", 
+      "center": { "lat": 35.6762, "lng": 139.6503 }, 
+      "radius_km": 12 
+    },
+    "budgets": {
+      "google": { "tokens_per_min": 400, "max_tokens_total": 40000 },
+      "web": { "bytes_per_min": 1500000, "max_bytes_total": 400000000 },
+      "llm": { "tokens_per_min": 150, "max_tokens_total": 20000 },
+      "open_data": { "calls_per_min": 120, "max_calls_total": 12000 }
+    },
+    "kill_switches": { "google": false, "web": false, "llm": false, "open_data": false },
+    "early_stop": { "min_new_unique_rate": 0.05, "window_calls": 200 },
+    "timeouts": { "wall_clock_seconds": 4800 },
+    "s3_prefix": "cities/tokyo/test-run/"
+  }

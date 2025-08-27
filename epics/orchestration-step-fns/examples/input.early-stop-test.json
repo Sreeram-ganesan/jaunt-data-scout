@@ -1,0 +1,19 @@
+{
+    "job_id": "early-stop-test-001",
+    "city": "Edinburgh",
+    "seed": { 
+      "type": "map", 
+      "center": { "lat": 55.9533, "lng": -3.1883 }, 
+      "radius_km": 8 
+    },
+    "budgets": {
+      "google": { "tokens_per_min": 1000, "max_tokens_total": 100000 },
+      "web": { "bytes_per_min": 5000000, "max_bytes_total": 1000000000 },
+      "llm": { "tokens_per_min": 500, "max_tokens_total": 50000 },
+      "open_data": { "calls_per_min": 500, "max_calls_total": 50000 }
+    },
+    "kill_switches": { "google": false, "web": false, "llm": false, "open_data": false },
+    "early_stop": { "min_new_unique_rate": 0.80, "window_calls": 25 },
+    "timeouts": { "wall_clock_seconds": 3600 },
+    "s3_prefix": "tests/early-stop/"
+  }

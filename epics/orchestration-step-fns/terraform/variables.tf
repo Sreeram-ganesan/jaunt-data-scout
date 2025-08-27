@@ -107,3 +107,34 @@ variable "kms_key_id" {
   type        = string
   default     = null
 }
+# Feature flags to control mock vs real implementations
+variable "mock_lambda_arn" {
+  description = "ARN of the mock Lambda function to use for states configured as mock"
+  type        = string
+  default     = ""
+}
+
+variable "state_implementations" {
+  description = "Configure each state to use 'mock' or 'real' implementation"
+  type = object({
+    discover_web_sources   = optional(string, "mock")
+    discover_targets       = optional(string, "mock")
+    seed_primaries        = optional(string, "mock")
+    expand_neighbors      = optional(string, "mock")
+    tile_sweep           = optional(string, "mock")
+    web_fetch            = optional(string, "mock")
+    extract_with_llm     = optional(string, "mock")
+    geocode_validate     = optional(string, "mock")
+    dedupe_canonicalize  = optional(string, "mock")
+    persist              = optional(string, "mock")
+    rank                 = optional(string, "mock")
+  })
+  default = {}
+  
+  validation {
+    condition = alltrue([
+      for impl in values(var.state_implementations) : contains(["mock", "real"], impl)
+    ])
+    error_message = "All state implementations must be either 'mock' or 'real'."
+  }
+}

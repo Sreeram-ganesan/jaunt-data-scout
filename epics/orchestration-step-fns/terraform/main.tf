@@ -21,6 +21,10 @@ module "sfn" {
 
   frontier_dlq_url = aws_sqs_queue.frontier_dlq.id
 
+  # Feature flag variables
+  mock_lambda_arn        = var.mock_lambda_arn
+  state_implementations  = var.state_implementations
+
   # Observability variables
   sfn_log_level              = var.sfn_log_level
   sfn_include_execution_data = var.sfn_include_execution_data
