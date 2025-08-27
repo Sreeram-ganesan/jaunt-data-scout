@@ -52,7 +52,9 @@ variable "step_function_name" {
 }
 
 variable "lambda_discover_web_sources_arn" {
-  type = string
+  description = "ARN of DiscoverWebSources Lambda (optional - will use local resource if not provided)"
+  type        = string
+  default     = ""
 }
 
 variable "lambda_discover_targets_arn" {
