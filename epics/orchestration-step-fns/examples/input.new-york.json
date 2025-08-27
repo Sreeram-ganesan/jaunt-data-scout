@@ -1,0 +1,19 @@
+{
+    "job_id": "city-discovery-new-york-001",
+    "city": "New York",
+    "seed": { 
+      "type": "map", 
+      "center": { "lat": 40.7128, "lng": -74.0060 }, 
+      "radius_km": 20 
+    },
+    "budgets": {
+      "google": { "tokens_per_min": 600, "max_tokens_total": 60000 },
+      "web": { "bytes_per_min": 3000000, "max_bytes_total": 750000000 },
+      "llm": { "tokens_per_min": 250, "max_tokens_total": 30000 },
+      "open_data": { "calls_per_min": 200, "max_calls_total": 20000 }
+    },
+    "kill_switches": { "google": false, "web": false, "llm": false, "open_data": false },
+    "early_stop": { "min_new_unique_rate": 0.05, "window_calls": 200 },
+    "timeouts": { "wall_clock_seconds": 7200 },
+    "s3_prefix": "cities/new-york/test-run/"
+  }

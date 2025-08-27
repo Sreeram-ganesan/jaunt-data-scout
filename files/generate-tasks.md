@@ -75,9 +75,9 @@ Tasks
 - [x] S3 layout and lifecycle for raw/html, raw/json, extracted, manifests.
 - [x] Orchestrator config: YAML defaults for budgets, concurrency, early-stop; run-level overrides; kill switches and circuit breakers; resume/reentry semantics.
 - [x] Emit metrics/alerts per state; tracing context propagation across SQS and Step Functions; stitch traces across WebFetch and LLM extraction.
-- [ ] Feature flags to flip individual states mock↔real (per-state env/vars); document toggling procedure.
-- [ ] DLQ re-drive runbook and helper CLI; example reprocessing flow.
-- [ ] Execution input presets (golden inputs) per city for smoke/e2e tests.
+- [x] Feature flags to flip individual states mock↔real (per-state env/vars); document toggling procedure.
+- [x] DLQ re-drive runbook and helper CLI; example reprocessing flow.
+- [x] Execution input presets (golden inputs) per city for smoke/e2e tests.
 
 ---
 

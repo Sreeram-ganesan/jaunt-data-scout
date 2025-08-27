@@ -1,0 +1,19 @@
+{
+    "job_id": "budget-test-small-001",
+    "city": "Edinburgh",
+    "seed": { 
+      "type": "map", 
+      "center": { "lat": 55.9533, "lng": -3.1883 }, 
+      "radius_km": 5 
+    },
+    "budgets": {
+      "google": { "tokens_per_min": 50, "max_tokens_total": 1000 },
+      "web": { "bytes_per_min": 100000, "max_bytes_total": 5000000 },
+      "llm": { "tokens_per_min": 20, "max_tokens_total": 500 },
+      "open_data": { "calls_per_min": 30, "max_calls_total": 1000 }
+    },
+    "kill_switches": { "google": false, "web": false, "llm": false, "open_data": false },
+    "early_stop": { "min_new_unique_rate": 0.10, "window_calls": 50 },
+    "timeouts": { "wall_clock_seconds": 900 },
+    "s3_prefix": "tests/budget-small/"
+  }
