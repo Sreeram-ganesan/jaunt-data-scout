@@ -14,3 +14,26 @@ variable "lambda_persist_arn" { type = string }
 variable "lambda_rank_arn" { type = string }
 
 variable "frontier_dlq_url" { type = string }
+
+# Feature flag variables
+variable "mock_lambda_arn" {
+  description = "ARN of the mock Lambda function to use for states configured as mock"
+  type        = string
+}
+
+variable "state_implementations" {
+  description = "Configure each state to use 'mock' or 'real' implementation"
+  type = object({
+    discover_web_sources   = string
+    discover_targets       = string
+    seed_primaries        = string
+    expand_neighbors      = string
+    tile_sweep           = string
+    web_fetch            = string
+    extract_with_llm     = string
+    geocode_validate     = string
+    dedupe_canonicalize  = string
+    persist              = string
+    rank                 = string
+  })
+}

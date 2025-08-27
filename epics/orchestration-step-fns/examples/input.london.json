@@ -1,0 +1,19 @@
+{
+    "job_id": "city-discovery-london-001",
+    "city": "London",
+    "seed": { 
+      "type": "map", 
+      "center": { "lat": 51.5074, "lng": -0.1278 }, 
+      "radius_km": 15 
+    },
+    "budgets": {
+      "google": { "tokens_per_min": 500, "max_tokens_total": 50000 },
+      "web": { "bytes_per_min": 2000000, "max_bytes_total": 500000000 },
+      "llm": { "tokens_per_min": 200, "max_tokens_total": 25000 },
+      "open_data": { "calls_per_min": 150, "max_calls_total": 15000 }
+    },
+    "kill_switches": { "google": false, "web": false, "llm": false, "open_data": false },
+    "early_stop": { "min_new_unique_rate": 0.05, "window_calls": 200 },
+    "timeouts": { "wall_clock_seconds": 5400 },
+    "s3_prefix": "cities/london/test-run/"
+  }
