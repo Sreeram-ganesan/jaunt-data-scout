@@ -44,35 +44,8 @@ resource "aws_iam_role" "sfn_role" {
 
 data "aws_iam_policy_document" "sfn_policy" {
   statement {
-    sid    = "AllowLogs"
+    sid    = "AllowSQS"
     effect = "Allow"
-    actions = [
-      "logs:CreateLogDelivery",
-      "logs:GetLogDelivery",
-      "logs:UpdateLogDelivery",
-      "logs:DeleteLogDelivery",
-      "logs:ListLogDeliveries",
-      "logs:PutLogEvents",
-      "logs:CreateLogStream",
-      "logs:CreateLogGroup"
-    ]
-    resources = ["*"]
-  }
-
-  # TODO: Refine permissions for least privilege - currently allowing all X-Ray actions
-  statement {
-    sid    = "AllowXRay"
-    effect = "Allow"
-    actions = [
-      "xray:PutTraceSegments",
-      "xray:PutTelemetryRecords"
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    sid     = "AllowSQS"
-    effect  = "Allow"
     actions = [
       "sqs:SendMessage",
       "sqs:ReceiveMessage",
@@ -86,8 +59,8 @@ data "aws_iam_policy_document" "sfn_policy" {
   }
 
   statement {
-    sid     = "AllowS3RawCache"
-    effect  = "Allow"
+    sid    = "AllowS3RawCache"
+    effect = "Allow"
     actions = [
       "s3:GetObject",
       "s3:PutObject",
