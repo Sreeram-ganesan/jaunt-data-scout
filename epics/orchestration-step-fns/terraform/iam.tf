@@ -4,8 +4,8 @@ locals {
     Environment = var.environment
   }
   # New: list of Lambda ARNs SFN needs to invoke
-  lambda_arns = [
-    var.lambda_discover_web_sources_arn,
+  lambda_arns = compact([
+    var.lambda_discover_web_sources_arn != "" ? var.lambda_discover_web_sources_arn : aws_lambda_function.discover_web_sources.arn,
     var.lambda_discover_targets_arn,
     var.lambda_seed_primaries_arn,
     var.lambda_expand_neighbors_arn,
@@ -16,7 +16,7 @@ locals {
     var.lambda_dedupe_canonicalize_arn,
     var.lambda_persist_arn,
     var.lambda_rank_arn,
-  ]
+  ])
 }
 
 data "aws_iam_policy_document" "sfn_assume" {

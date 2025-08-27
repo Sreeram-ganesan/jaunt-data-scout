@@ -1,0 +1,23 @@
+{
+  "city": {
+    "name": "Edinburgh",
+    "country_code": "GB"
+  },
+  "orchestrator": {
+    "correlation_id": "test-edinburgh-sfn-123",
+    "fail_fast": false
+  },
+  "budgets": {
+    "max_urls": 25,
+    "max_per_domain": 5
+  },
+  "kill_switches": {
+    "web": false,
+    "maps": true
+  },
+  "s3_prefix": "test-runs/",
+  "timeouts": {
+    "web_fetch_seconds": 300,
+    "extract_llm_seconds": 600
+  }
+}

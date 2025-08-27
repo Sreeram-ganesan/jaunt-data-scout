@@ -7,7 +7,7 @@ module "sfn" {
   state_machine_name = local.step_function_name
   sfn_role_arn       = aws_iam_role.sfn_role.arn
 
-  lambda_discover_web_sources_arn = var.lambda_discover_web_sources_arn
+  lambda_discover_web_sources_arn = var.lambda_discover_web_sources_arn != "" ? var.lambda_discover_web_sources_arn : aws_lambda_function.discover_web_sources.arn
   lambda_discover_targets_arn     = var.lambda_discover_targets_arn
   lambda_seed_primaries_arn       = var.lambda_seed_primaries_arn
   lambda_expand_neighbors_arn     = var.lambda_expand_neighbors_arn
