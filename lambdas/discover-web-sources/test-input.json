@@ -1,0 +1,15 @@
+{
+  "run_id": "test-run-edinburgh-20250827",
+  "city": {
+    "name": "Edinburgh",
+    "country_code": "GB"
+  },
+  "orchestrator": {
+    "correlation_id": "corr-edinburgh-test-abc123",
+    "fail_fast": false
+  },
+  "budgets": {
+    "max_urls": 20,
+    "max_per_domain": 3
+  }
+}

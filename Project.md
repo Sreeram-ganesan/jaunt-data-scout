@@ -2,6 +2,15 @@
 
 Concise overview of how Data Scout is implemented on AWS: Step Functions orchestrates city discovery; SQS acts as the frontier/DLQ; Lambda runs connectors/processors; S3 stores raw/extracted/manifests; IAM secures access; CloudWatch/X-Ray provide observability. Terraform under epics/orchestration-step-fns/terraform provisions core infra.
 
+## Current Implementation Status
+
+- ✅ **Step Functions Orchestrator**: Complete workflow with mock/real feature flags
+- ✅ **SQS Frontier & DLQ**: Message queuing with redrive capability  
+- ✅ **DiscoverWebSources Lambda**: Tavily API integration for web source discovery
+- 🚧 **Other Lambdas**: WebFetch, ExtractWithLLM, GeocodeValidate, etc. (planned)
+
+The **DiscoverWebSources** Lambda is the first real implementation in the web discovery path. It can be toggled between mock and real via the `discover_web_sources` feature flag in Terraform configurations.
+
 ## System Overview (AWS)
 
 - Orchestrator: AWS Step Functions State Machine (city job lifecycle).
@@ -36,7 +45,7 @@ Concise overview of how Data Scout is implemented on AWS: Step Functions orchest
 - Notes: See lambdas/mock-go (Makefile, README, main.go).
 
 4) Lambda — Connectors/Processors (planned)
-- Tavily Connector: discover web sources; enqueue {type:web,...} to SQS.
+- **Tavily Connector (DiscoverWebSources): IMPLEMENTED** - discover web sources; enqueue {type:web,...} to SQS.
 - Web Fetcher: robots-aware fetch; write raw html/json to S3; hand off to ExtractWithLLM.
 - ExtractWithLLM: bounded JSON extraction; write extracted JSON to S3.
 - GeocodeValidate: fill/validate coords; quality flags.
