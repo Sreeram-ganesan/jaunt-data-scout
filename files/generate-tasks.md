@@ -43,9 +43,9 @@ Tasks
   - [ ] EMF metrics per Lambda: calls, errors, retries, duration_ms, http_bytes_in, tokens_in, tokens_out, token_cost_estimate, new_unique_rate.
   - [ ] Correlation_id propagation across SQS → Lambdas; include in logs and spans.
   - [ ] Dashboards + alarms: ExecutionFailed, state timeouts, DLQ depth, budget cap nearing (LLM/Tavily/HTTP), error spikes.
-- [ ] DLQ & runbooks
-  - [ ] Re-drive Lambda/CLI script to re-enqueue DLQ messages; safeguards to avoid duplicates.
-  - [ ] Incident runbook for city jobs (triage, re-drive, rollback toggles).
+- [x] DLQ & runbooks
+  - [x] Re-drive Lambda/CLI script to re-enqueue DLQ messages; safeguards to avoid duplicates.
+  - [x] Incident runbook for city jobs (triage, re-drive, rollback toggles).
 - [ ] Feature flags
   - [ ] Per-state mock↔real flags via Terraform/template variables and Lambda env.
 - [ ] Golden tests
